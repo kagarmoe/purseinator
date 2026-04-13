@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCollections, getMe } from "../api";
+import { devLogin, getCollections, getMe } from "../api";
 
 interface Collection {
   id: number;
@@ -8,23 +8,38 @@ interface Collection {
   description: string;
 }
 
+const IS_DEV = import.meta.env.DEV;
+
 export default function Home() {
   const navigate = useNavigate();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = () => {
     Promise.all([getMe(), getCollections()])
       .then(([me, colls]) => {
         setUser(me);
         setCollections(colls);
       })
-      .catch(() => {
-        // Not logged in
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleDevLogin = async () => {
+    try {
+      const result = await devLogin();
+      document.cookie = `session_id=${result.session_id}; path=/`;
+      setLoading(true);
+      loadData();
+    } catch {
+      alert("Dev login failed — is the server running?");
+    }
+  };
 
   if (loading) {
     return <p style={{ textAlign: "center", padding: "2rem", color: "#9ca3af" }}>Loading...</p>;
@@ -34,7 +49,12 @@ export default function Home() {
     return (
       <div style={{ padding: "2rem", textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
         <h1 style={{ fontSize: "2rem" }}>Bagfolio</h1>
-        <p style={{ color: "#666" }}>Sign in to start ranking your collection.</p>
+        <p style={{ color: "#666", marginBottom: "1.5rem" }}>Sign in to start ranking your collection.</p>
+        {IS_DEV && (
+          <button onClick={handleDevLogin} style={devBtnStyle}>
+            Dev Login
+          </button>
+        )}
       </div>
     );
   }
@@ -76,3 +96,14 @@ export default function Home() {
     </div>
   );
 }
+
+const devBtnStyle: React.CSSProperties = {
+  padding: "0.75rem 2rem",
+  fontSize: "1rem",
+  fontWeight: 600,
+  color: "#f59e0b",
+  background: "transparent",
+  border: "2px dashed #f59e0b",
+  borderRadius: 8,
+  cursor: "pointer",
+};

@@ -57,6 +57,32 @@ async def me(user: UserTable = Depends(get_current_user)):
     return {"id": user.id, "email": user.email, "name": user.name, "role": user.role}
 
 
+@router.post("/dev-login")
+async def dev_login(db: AsyncSession = Depends(get_db)):
+    settings = get_settings()
+    if not settings.dev_mode:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    email = "dev@bagfolio.local"
+    result = await db.execute(select(UserTable).where(UserTable.email == email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        user = UserTable(email=email, name="Dev User", role="operator")
+        db.add(user)
+        await db.flush()
+
+    sid = create_session_id()
+    session = SessionTable(
+        session_id=sid,
+        user_id=user.id,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=365),
+    )
+    db.add(session)
+    await db.commit()
+
+    return {"session_id": sid, "email": email, "name": user.name, "role": user.role}
+
+
 @router.post("/logout")
 async def logout(session_id: str = Cookie(None), db: AsyncSession = Depends(get_db)):
     if session_id:

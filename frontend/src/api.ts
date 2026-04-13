@@ -23,6 +23,10 @@ export async function verifyToken(token: string) {
   return apiFetch(`/auth/verify?token=${token}`);
 }
 
+export async function devLogin() {
+  return apiFetch("/auth/dev-login", { method: "POST" });
+}
+
 export async function getMe() {
   return apiFetch("/auth/me");
 }
