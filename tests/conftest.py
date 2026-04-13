@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+import tempfile
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from bagfolio.main import create_app
+from bagfolio.models import Base
+
+
+@pytest.fixture
+def app():
+    return create_app()
+
+
+@pytest.fixture
+async def client(app):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+async def db_engine():
+    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await engine.dispose()
+
+
+@pytest.fixture
+async def db_session_factory(db_engine):
+    return async_sessionmaker(db_engine, expire_on_commit=False)
+
+
+@pytest.fixture
+def photo_storage_root(tmp_path):
+    return str(tmp_path / "photos")
+
+
+@pytest.fixture
+async def db_client(db_engine, db_session_factory, photo_storage_root):
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+async def auth_client(db_engine, db_session_factory, photo_storage_root):
+    """A test client that is already authenticated as a curator."""
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # Login
+        resp = await ac.post("/auth/magic-link", json={"email": "rachel@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        session_id = resp.json()["session_id"]
+        ac.cookies.set("session_id", session_id)
+        yield ac
