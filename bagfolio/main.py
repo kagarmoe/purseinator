@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from bagfolio.routes import auth, collections, items, photos
+from bagfolio.routes import auth, collections, items, photos, ranking
 
 
 def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
@@ -23,5 +23,6 @@ def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
     app.include_router(collections.router, prefix="/collections")
     app.include_router(items.router, prefix="/collections/{collection_id}/items")
     app.include_router(photos.router)
+    app.include_router(ranking.router, prefix="/collections/{collection_id}/ranking")
 
     return app
