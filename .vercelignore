@@ -1,0 +1,20 @@
+# Test and simulation code — not needed at runtime
+tests/
+simulations/
+
+# Documentation
+docs/
+
+# Local development databases
+*.db
+
+# Python virtual environment (Vercel uses its own)
+.venv/
+
+# Build artifacts
+*.egg-info/
+
+# Agent runtime files
+.beads/
+.runtime/
+CLAUDE.local.md

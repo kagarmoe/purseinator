@@ -2,6 +2,30 @@
 
 A web app for curating handbag collections through pairwise comparisons. An operator photographs and ingests items via CLI; a curator ranks them through short, touch-friendly "this or that" sessions. Keepers emerge naturally from the rankings.
 
+## Vercel Deployment
+
+The app deploys to Vercel with a static React frontend (`dist/`) and a Python serverless function (`api/index.py`).
+
+**Required environment variables** (set in Vercel project settings):
+
+| Variable | Description |
+|----------|-------------|
+| `PURSEINATOR_DATABASE_URL` | Postgres connection string — use [Neon](https://neon.tech) for serverless compatibility, e.g. `postgresql+asyncpg://user:pass@host/db` |
+| `PURSEINATOR_SECRET_KEY` | Secret key for JWT tokens — generate with `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
+| `PURSEINATOR_PHOTO_STORAGE_ROOT` | Photo storage directory — on Vercel use `/tmp` (ephemeral) or configure cloud object storage |
+
+**Deploy:**
+
+1. Connect the GitHub repo to Vercel.
+2. Set the environment variables above.
+3. Vercel runs `cd frontend && npm run build` and serves `dist/`.
+4. API requests to `/api/*` route to `api/index.py` (FastAPI serverless function).
+
+Database migrations must be run separately before first use:
+```bash
+PURSEINATOR_DATABASE_URL=<neon-url> alembic upgrade head
+```
+
 ## Requirements
 
 - Python 3.10+
