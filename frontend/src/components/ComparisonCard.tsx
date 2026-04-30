@@ -14,11 +14,15 @@ interface Props {
 
 export default function ComparisonCard({ itemA, itemB, infoLevel, onPick }: Props) {
   return (
-    <div style={{ display: "flex", gap: "1rem", justifyContent: "center", padding: "1rem" }}>
+    <div className="flex items-center gap-4 w-full max-w-2xl">
       <ItemCard item={itemA} infoLevel={infoLevel} onTap={() => onPick(itemA.id)} />
-      <div style={{ display: "flex", alignItems: "center", fontSize: "1.5rem", color: "#9ca3af" }}>
-        or
+
+      <div className="flex flex-col items-center shrink-0">
+        <span className="text-[var(--color-muted)] text-xs tracking-widest uppercase">
+          or
+        </span>
       </div>
+
       <ItemCard item={itemB} infoLevel={infoLevel} onTap={() => onPick(itemB.id)} />
     </div>
   );
@@ -39,53 +43,18 @@ function ItemCard({
   return (
     <button
       onClick={onTap}
-      style={{
-        flex: 1,
-        maxWidth: 300,
-        minHeight: 200,
-        padding: "1rem",
-        border: "2px solid #e5e7eb",
-        borderRadius: 16,
-        background: "white",
-        cursor: "pointer",
-        textAlign: "center",
-        transition: "transform 0.1s, border-color 0.1s",
-      }}
-      onPointerDown={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(0.97)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#2563eb";
-      }}
-      onPointerUp={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb";
-      }}
-      onPointerLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb";
-      }}
+      className="group flex-1 min-h-[220px] bg-[var(--color-white)] border border-[var(--color-near-black)]/10 cursor-pointer text-center transition-all duration-200 hover:scale-[1.03] hover:shadow-xl hover:shadow-[var(--color-near-black)]/10 hover:border-[var(--color-near-black)]/20 p-5 flex flex-col items-center"
     >
-      <div
-        style={{
-          width: "100%",
-          height: 140,
-          background: "#f3f4f6",
-          borderRadius: 8,
-          marginBottom: "0.75rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "3rem",
-        }}
-      >
-        👜
-      </div>
+      {/* Elegant gradient placeholder */}
+      <div className="w-full h-36 rounded-sm mb-4 bg-gradient-to-br from-[var(--color-cream)] via-[var(--color-gold)]/10 to-[var(--color-near-black)]/5 shrink-0" />
+
       {showBrand && (
-        <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>
-          {item.brand === "unknown" ? "Unknown brand" : item.brand}
+        <div className="font-[var(--font-serif)] font-semibold text-[var(--color-near-black)] text-base">
+          {item.brand === "unknown" ? "Unknown" : item.brand}
         </div>
       )}
       {showCondition && item.condition_score !== null && (
-        <div style={{ color: "#6b7280", fontSize: "0.9rem", marginTop: "0.25rem" }}>
+        <div className="text-[var(--color-muted)] text-xs mt-1.5">
           Condition: {Math.round(item.condition_score * 100)}%
         </div>
       )}

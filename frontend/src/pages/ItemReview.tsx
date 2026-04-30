@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Badge } from "../components/ui/badge";
 
 interface Item {
   id: number;
@@ -10,6 +11,12 @@ interface Item {
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
+
+function statusVariant(status: string): "keeper" | "seller" | "unranked" {
+  if (status === "keeper") return "keeper";
+  if (status === "seller") return "seller";
+  return "unranked";
+}
 
 export default function ItemReview() {
   const { collectionId } = useParams<{ collectionId: string }>();
@@ -38,75 +45,77 @@ export default function ItemReview() {
   };
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: 600, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Item Review</h1>
+    <div className="min-h-screen bg-[var(--color-cream)]">
+      <header className="border-b border-[var(--color-near-black)]/10 px-6 py-5">
+        <h1 className="font-[var(--font-serif)] text-2xl text-[var(--color-near-black)]">
+          Item Review
+        </h1>
+      </header>
 
-      {items.length === 0 ? (
-        <p style={{ color: "#9ca3af" }}>No items in this collection.</p>
-      ) : (
-        <div style={{ display: "grid", gap: "0.75rem" }}>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                padding: "1rem",
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                background: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  {editing === item.id ? (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <input
-                        value={editBrand}
-                        onChange={(e) => setEditBrand(e.target.value)}
-                        style={{ padding: "0.25rem 0.5rem", borderRadius: 4, border: "1px solid #d1d5db" }}
-                        autoFocus
-                      />
+      <main className="px-6 py-6 max-w-2xl mx-auto">
+        {items.length === 0 ? (
+          <p className="text-[var(--color-muted)] text-sm text-center pt-12">
+            No items in this collection.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="bg-[var(--color-white)] border border-[var(--color-near-black)]/10 p-5"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    {editing === item.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={editBrand}
+                          onChange={(e) => setEditBrand(e.target.value)}
+                          className="flex-1 min-w-0 px-2 py-1 text-sm border border-[var(--color-gold)] bg-transparent outline-none text-[var(--color-near-black)] transition-colors"
+                          autoFocus
+                          onKeyDown={(e) => e.key === "Enter" && saveBrand(item.id)}
+                        />
+                        <button
+                          onClick={() => saveBrand(item.id)}
+                          className="text-xs px-2 py-1 bg-[var(--color-near-black)] text-[var(--color-white)] cursor-pointer"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => saveBrand(item.id)}
-                        style={{ padding: "0.25rem 0.5rem", borderRadius: 4, background: "#2563eb", color: "white", border: "none", cursor: "pointer" }}
+                        onClick={() => { setEditing(item.id); setEditBrand(item.brand); }}
+                        className="font-medium text-[var(--color-near-black)] text-sm hover:text-[var(--color-gold)] transition-colors cursor-pointer text-left"
+                        title="Click to edit brand"
                       >
-                        Save
+                        {item.brand === "unknown" ? "Unknown brand" : item.brand}
                       </button>
+                    )}
+                  </div>
+                  <Badge variant={statusVariant(item.status)}>
+                    {item.status}
+                  </Badge>
+                </div>
+
+                {item.condition_score !== null && (
+                  <div>
+                    <div className="flex justify-between text-xs text-[var(--color-muted)] mb-1">
+                      <span>Condition</span>
+                      <span>{Math.round(item.condition_score * 100)}%</span>
                     </div>
-                  ) : (
-                    <span
-                      onClick={() => { setEditing(item.id); setEditBrand(item.brand); }}
-                      style={{ fontWeight: 600, cursor: "pointer" }}
-                      title="Click to edit brand"
-                    >
-                      {item.brand === "unknown" ? "Unknown brand" : item.brand}
-                    </span>
-                  )}
-                </div>
-                <span
-                  style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: 4,
-                    fontSize: "0.8rem",
-                    background:
-                      item.status === "keeper" ? "#dcfce7" :
-                      item.status === "seller" ? "#fee2e2" : "#f3f4f6",
-                    color:
-                      item.status === "keeper" ? "#166534" :
-                      item.status === "seller" ? "#991b1b" : "#6b7280",
-                  }}
-                >
-                  {item.status}
-                </span>
+                    <div className="h-0.5 bg-[var(--color-near-black)]/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[var(--color-gold)] transition-all"
+                        style={{ width: `${Math.round(item.condition_score * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              {item.condition_score !== null && (
-                <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>
-                  Condition: {Math.round(item.condition_score * 100)}%
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
