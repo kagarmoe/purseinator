@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { devLogin, getCollections, getMe } from "../api";
+
 interface Collection {
   id: number;
   name: string;
@@ -42,17 +43,12 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--color-cream)] flex flex-col items-center justify-center px-6">
-        <h1 className="font-[var(--font-serif)] text-5xl tracking-tight text-[var(--color-near-black)] mb-12">
-          PURSEINATOR
-        </h1>
-        <div className="w-full max-w-md space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-20 rounded-sm bg-[var(--color-near-black)]/5 animate-pulse"
-            />
-          ))}
+      <div className="min-h-svh bg-cream flex items-center justify-center">
+        <div className="space-y-3 w-full max-w-sm px-6">
+          <div className="h-8 bg-cream rounded animate-pulse" />
+          <div className="h-4 bg-cream rounded w-3/4 animate-pulse" />
+          <div className="h-24 bg-cream rounded animate-pulse" />
+          <div className="h-24 bg-cream rounded animate-pulse" />
         </div>
       </div>
     );
@@ -60,60 +56,64 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[var(--color-cream)] flex flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-[var(--font-serif)] text-6xl tracking-tight text-[var(--color-near-black)] mb-4">
-          PURSEINATOR
-        </h1>
-        <p className="text-[var(--color-muted)] text-sm tracking-widest uppercase mb-12">
-          Rank your collection
-        </p>
-        {IS_DEV && (
-          <button
-            onClick={handleDevLogin}
-            className="px-8 py-3 rounded-full border-2 border-dashed border-[var(--color-gold)] text-[var(--color-gold)] text-sm tracking-wide hover:bg-[var(--color-gold)]/5 transition-colors cursor-pointer"
-          >
-            Dev Login
-          </button>
-        )}
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
+        <div className="text-center max-w-xs w-full">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
+            The Collection Edit
+          </p>
+          <h1 className="font-serif text-5xl text-near-black mb-6 leading-none">
+            PURSEINATOR
+          </h1>
+          <p className="text-muted text-sm mb-10 font-sans">
+            Sign in to start curating your collection.
+          </p>
+          {IS_DEV && (
+            <button
+              onClick={handleDevLogin}
+              className="px-8 py-3 border-2 border-dashed border-terracotta text-terracotta text-sm font-sans font-medium rounded-full hover:bg-terracotta hover:text-white transition-colors cursor-pointer"
+            >
+              Dev Login
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)]">
-      <header className="border-b border-[var(--color-near-black)]/10 px-6 py-6 text-center">
-        <h1 className="font-[var(--font-serif)] text-4xl tracking-tight text-[var(--color-near-black)]">
+    <div className="min-h-svh bg-cream">
+      <header className="px-6 pt-12 pb-8 border-b border-cream">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-2">
+          The Collection Edit
+        </p>
+        <h1 className="font-serif text-4xl text-near-black leading-tight">
           PURSEINATOR
         </h1>
-        <p className="text-[var(--color-muted)] text-xs tracking-widest uppercase mt-1">
-          {user.name}
+        <p className="text-muted text-sm mt-2 font-sans">
+          Welcome back, {user.name}.
         </p>
       </header>
 
-      <main className="px-6 py-8 max-w-xl mx-auto">
-        <p className="text-[var(--color-muted)] text-xs tracking-widest uppercase mb-6">
+      <main className="px-6 py-8 max-w-lg mx-auto">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-muted font-sans mb-6">
           Your Collections
-        </p>
+        </h2>
 
         {collections.length === 0 ? (
-          <p className="text-[var(--color-muted)] text-sm">
+          <p className="text-muted text-sm font-sans italic">
             No collections yet. Ask your operator to set one up.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {collections.map((c) => (
               <button
                 key={c.id}
                 onClick={() => navigate(`/session/${c.id}`)}
-                className="group w-full text-left px-6 py-5 bg-[var(--color-white)] border border-[var(--color-near-black)]/10 hover:border-[var(--color-gold)] transition-colors duration-200 cursor-pointer"
+                className="group w-full text-left bg-dusty-rose/20 border-l-4 border-l-terracotta border border-dusty-rose px-6 py-5 hover:bg-dusty-rose/40 transition-colors cursor-pointer"
               >
-                <div className="font-semibold text-[var(--color-near-black)] text-base group-hover:text-[var(--color-gold)] transition-colors">
-                  {c.name}
-                </div>
+                <div className="font-serif text-lg text-near-black group-hover:text-terracotta transition-colors">{c.name}</div>
                 {c.description && (
-                  <div className="text-[var(--color-muted)] text-sm mt-1">
-                    {c.description}
-                  </div>
+                  <div className="text-muted text-xs font-sans mt-1">{c.description}</div>
                 )}
               </button>
             ))}

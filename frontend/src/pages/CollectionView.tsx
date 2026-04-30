@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getRankedItems, updateItemStatus } from "../api";
-import { ChevronUp, ChevronDown } from "lucide-react";
 
 interface RankedItem {
   id: number;
@@ -49,69 +48,70 @@ export default function CollectionView() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)]">
-      <header className="border-b border-[var(--color-near-black)]/10 px-6 py-5 flex items-center justify-between">
-        <h1 className="font-[var(--font-serif)] text-2xl text-[var(--color-near-black)]">
-          Rankings
-        </h1>
+    <div className="min-h-svh bg-cream">
+      <header className="px-6 pt-10 pb-6 border-b border-cream flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
+            Collection
+          </p>
+          <h1 className="font-serif text-3xl text-near-black leading-tight">Your Rankings</h1>
+        </div>
         <button
           onClick={() => navigate(`/session/${collectionId}`)}
-          className="text-xs tracking-widest uppercase text-[var(--color-gold)] border border-[var(--color-gold)]/40 px-4 py-2 hover:bg-[var(--color-gold)]/5 transition-colors cursor-pointer"
+          className="text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-5 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
         >
           Rank More
         </button>
       </header>
 
-      <main className="px-6 py-6 max-w-lg mx-auto">
+      <main className="px-6 py-8 max-w-lg mx-auto">
         {items.length === 0 ? (
-          <p className="text-[var(--color-muted)] text-sm text-center pt-12">
-            No items ranked yet.
-          </p>
+          <p className="text-muted text-sm font-sans italic">No items ranked yet.</p>
         ) : (
           <div>
             {items.map((item, i) => (
               <div key={item.id}>
                 <div
-                  className={`flex items-center gap-4 py-4 border-l-2 pl-4 ${
+                  className={`flex items-center gap-4 py-4 border-l-4 pl-4 mb-0.5 ${
                     i < (dividerIndex ?? 0)
-                      ? "border-l-[var(--color-gold)]"
-                      : "border-l-[var(--color-near-black)]/10"
+                      ? "border-l-forest bg-forest/5"
+                      : "border-l-terracotta bg-terracotta/5"
                   }`}
                 >
-                  <span className="font-[var(--font-serif)] text-2xl text-[var(--color-near-black)]/30 w-8 shrink-0 text-right">
+                  <span className="font-serif text-3xl text-muted/40 w-10 text-center shrink-0 leading-none">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[var(--color-near-black)] truncate">
+                    <div className="font-serif text-base text-near-black">
                       {item.brand === "unknown" ? "Unknown" : item.brand}
                     </div>
-                    <div className="text-[var(--color-muted)] text-xs mt-0.5">
+                    <div className="text-xs text-muted font-sans mt-0.5">
                       {item.comparison_count} comparisons
                     </div>
                   </div>
                 </div>
 
-                {/* Keep/Sell divider */}
+                {/* gold divider bar between keep / sell */}
                 {dividerIndex !== null && i === dividerIndex - 1 && (
-                  <div className="flex items-center gap-3 py-2 my-1">
+                  <div className="flex items-center gap-3 py-3 my-1">
                     <button
                       onClick={() => moveDivider(dividerIndex - 1)}
-                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-gold)]/40 text-[var(--color-gold)] hover:bg-[var(--color-gold)]/10 transition-colors cursor-pointer rounded-sm"
                       aria-label="Move divider up"
+                      className="w-7 h-7 rounded-full border border-saffron text-saffron text-xs flex items-center justify-center hover:bg-saffron hover:text-white transition-colors cursor-pointer bg-transparent"
                     >
-                      <ChevronUp size={14} />
+                      ▲
                     </button>
-                    <div className="flex-1 h-px bg-[var(--color-gold)]" />
-                    <span className="text-[var(--color-gold)] text-xs tracking-widest uppercase whitespace-nowrap">
+                    <div className="flex-1 h-[3px] bg-saffron" />
+                    <span className="text-[10px] uppercase tracking-widest text-saffron font-sans whitespace-nowrap font-semibold">
                       Keep · Sell
                     </span>
-                    <div className="flex-1 h-px bg-[var(--color-gold)]" />
+                    <div className="flex-1 h-[3px] bg-saffron" />
                     <button
                       onClick={() => moveDivider(dividerIndex + 1)}
-                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-gold)]/40 text-[var(--color-gold)] hover:bg-[var(--color-gold)]/10 transition-colors cursor-pointer rounded-sm"
                       aria-label="Move divider down"
+                      className="w-7 h-7 rounded-full border border-saffron text-saffron text-xs flex items-center justify-center hover:bg-saffron hover:text-white transition-colors cursor-pointer bg-transparent"
                     >
-                      <ChevronDown size={14} />
+                      ▼
                     </button>
                   </div>
                 )}

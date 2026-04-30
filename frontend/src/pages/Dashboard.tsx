@@ -22,50 +22,46 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[var(--color-cream)] flex items-center justify-center">
-        <div className="w-48 h-4 bg-[var(--color-near-black)]/5 animate-pulse" />
+      <div className="min-h-svh bg-cream flex items-center justify-center">
+        <p className="text-muted text-sm font-sans">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)]">
-      <header className="border-b border-[var(--color-near-black)]/10 px-6 py-5">
-        <h1 className="font-[var(--font-serif)] text-2xl text-[var(--color-near-black)]">
-          Dashboard
-        </h1>
-        <p className="text-[var(--color-muted)] text-xs mt-1">{user.name}</p>
+    <div className="min-h-svh bg-cream">
+      <header className="px-6 pt-10 pb-6 border-b border-cream">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
+          Operator
+        </p>
+        <h1 className="font-serif text-3xl text-near-black leading-tight">Dashboard</h1>
       </header>
 
       <main className="px-6 py-8 max-w-2xl mx-auto">
-        <p className="text-[var(--color-near-black)] text-xs tracking-widest uppercase font-medium mb-4 [font-variant:small-caps]">
+        <h2 className="text-[10px] uppercase tracking-[0.3em] text-muted font-sans mb-6">
           Collections
-        </p>
+        </h2>
 
         {collections.length === 0 ? (
-          <p className="text-[var(--color-muted)] text-sm">
+          <p className="text-muted text-sm font-sans italic">
             No collections yet. Use the CLI to create one.
           </p>
         ) : (
-          <div className="border-t border-[var(--color-near-black)]/10">
+          <div className="divide-y divide-cream">
             {collections.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between py-4 border-b border-[var(--color-near-black)]/10"
+                className="py-4 flex items-center justify-between gap-4"
               >
-                <div className="min-w-0 flex-1 pr-4">
-                  <div className="font-medium text-[var(--color-near-black)]">
-                    {c.name}
-                  </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-base text-near-black">{c.name}</div>
                   {c.description && (
-                    <div className="text-[var(--color-muted)] text-sm mt-0.5 truncate">
-                      {c.description}
-                    </div>
+                    <div className="text-muted text-xs font-sans mt-0.5">{c.description}</div>
                   )}
                 </div>
                 <button
                   onClick={() => navigate(`/review/${c.id}`)}
-                  className="shrink-0 text-xs tracking-wide border border-[var(--color-near-black)]/20 px-4 py-2 text-[var(--color-near-black)] hover:border-[var(--color-near-black)]/40 transition-colors cursor-pointer"
+                  className="shrink-0 text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-4 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
                 >
                   Review Items
                 </button>
