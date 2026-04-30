@@ -56,6 +56,39 @@ npm install
 npm run dev
 ```
 
+## Local Preview
+
+### Frontend only (no backend required)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The dev login button appears automatically (dev mode) — click it to bypass auth and explore the UI. API calls will fail until the backend is running, but you can inspect all pages and styles.
+
+### Full app (frontend + backend)
+
+Run both in separate terminals:
+
+```bash
+# Terminal 1 — backend
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+purseinator serve
+```
+
+```bash
+# Terminal 2 — frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The frontend proxies all API calls (`/auth`, `/collections`, `/photos`, `/health`) to the backend on port 8000. Click **Dev Login** to create a test session, then use the app end to end.
+
 ## Running the Server
 
 ```bash
