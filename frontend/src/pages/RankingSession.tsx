@@ -37,13 +37,21 @@ export default function RankingSession() {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  // Load initial pair
+  const fetchNext = async () => {
+    try {
+      const data = await getNextPair(cid);
+      setPair(data);
+    } catch {
+      setError("Could not load next pair");
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
+    let mounted = true;
     getNextPair(cid)
-      .then((data) => { if (!cancelled) setPair(data); })
-      .catch(() => { if (!cancelled) setError("Could not load next pair"); });
-    return () => { cancelled = true; };
+      .then((data) => { if (mounted) setPair(data); })
+      .catch(() => { if (mounted) setError("Could not load next pair"); });
+    return () => { mounted = false; };
   }, [cid]);
 
   const handlePick = async (winnerId: number) => {
@@ -56,72 +64,73 @@ export default function RankingSession() {
         info_level_shown: pair.info_level,
       });
       setCount((c) => c + 1);
-      const next = await getNextPair(cid);
-      setPair(next);
+      await fetchNext();
     } catch {
       setError("Could not save comparison");
     }
   };
 
-  const progress = Math.max(0, (timeLeft / (minutes * 60)) * 100);
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const progressPct = Math.max(0, (timeLeft / (minutes * 60)) * 100);
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[var(--color-cream)] flex flex-col items-center justify-center px-6 text-center">
-        <p className="text-[var(--color-muted)] text-xs tracking-widest uppercase mb-4">
-          Session complete
-        </p>
-        <h1 className="font-[var(--font-serif)] text-4xl text-[var(--color-near-black)] mb-2">
-          Nice work.
-        </h1>
-        <p className="text-[var(--color-muted)] mb-10">
-          You compared {count} {count === 1 ? "pair" : "pairs"}.
-        </p>
-        <div className="w-full max-w-xs space-y-3">
-          <button
-            onClick={() => navigate(`/collection/${collectionId}`)}
-            className="w-full py-4 bg-[var(--color-near-black)] text-[var(--color-white)] text-sm tracking-wide hover:bg-[var(--color-near-black)]/90 transition-colors cursor-pointer"
-          >
-            See Rankings
-          </button>
-          <button
-            onClick={() => navigate(`/session/${collectionId}`)}
-            className="w-full py-4 border border-[var(--color-near-black)]/20 text-[var(--color-near-black)] text-sm tracking-wide hover:border-[var(--color-near-black)]/40 transition-colors cursor-pointer"
-          >
-            Another Session
-          </button>
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
+            Session Complete
+          </p>
+          <h1 className="font-serif text-4xl text-near-black mb-3">Well done.</h1>
+          <p className="text-muted text-sm font-sans mb-10">
+            You compared {count} {count === 1 ? "pair" : "pairs"}.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate(`/collection/${collectionId}`)}
+              className="w-full bg-terracotta text-white font-sans text-sm font-medium py-4 hover:bg-terracotta/80 transition-colors cursor-pointer"
+            >
+              See Your Rankings
+            </button>
+            <button
+              onClick={() => navigate(`/session/${collectionId}`)}
+              className="w-full bg-cobalt text-white font-sans text-sm py-4 hover:bg-cobalt/80 transition-colors cursor-pointer"
+            >
+              Another Session
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] flex flex-col">
-      {/* Slim progress bar at top edge */}
-      <div className="h-0.5 bg-[var(--color-near-black)]/10 w-full shrink-0">
+    <div className="min-h-svh bg-cream flex flex-col">
+      {/* slim progress bar at top edge */}
+      <div className="h-0.5 bg-cream w-full">
         <div
-          className="h-full bg-[var(--color-gold)] transition-all duration-1000 ease-linear"
-          style={{ width: `${progress}%` }}
+          className="h-full bg-terracotta transition-all duration-1000 ease-linear"
+          style={{ width: `${progressPct}%` }}
         />
       </div>
 
-      {/* Top controls */}
+      {/* header bar */}
       <div className="flex items-center justify-between px-6 py-4">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs text-[var(--color-muted)] border border-[var(--color-near-black)]/10 rounded-full">
+        <span className="font-serif text-lg text-near-black">{formatTime(timeLeft)}</span>
+        <span className="text-xs font-sans bg-cream text-muted px-3 py-1 rounded-full">
           {count} compared
         </span>
         <button
           onClick={() => { clearInterval(timerRef.current); setDone(true); }}
-          className="text-sm text-[var(--color-muted)] hover:text-[var(--color-near-black)] transition-colors cursor-pointer border border-transparent hover:border-[var(--color-near-black)]/10 px-3 py-1 rounded-sm"
+          className="text-xs font-sans uppercase tracking-[0.1em] bg-cobalt text-white px-4 py-1.5 hover:bg-cobalt/80 transition-colors cursor-pointer"
         >
           Done
         </button>
       </div>
 
-      {/* Main content */}
+      {/* main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8">
         {error && (
-          <p className="text-red-500 text-sm text-center mb-4">{error}</p>
+          <p className="text-red-500 text-sm font-sans text-center mb-4">{error}</p>
         )}
 
         {pair ? (
@@ -132,11 +141,11 @@ export default function RankingSession() {
             onPick={handlePick}
           />
         ) : (
-          <div className="text-[var(--color-muted)] text-sm">Loading...</div>
+          <p className="text-muted text-sm font-sans">Loading...</p>
         )}
 
-        <p className="text-[var(--color-muted)] text-xs tracking-widest uppercase mt-8">
-          Tap the piece you would keep
+        <p className="text-muted text-xs font-sans uppercase tracking-[0.15em] mt-8">
+          Tap the piece you'd rather keep
         </p>
       </div>
     </div>

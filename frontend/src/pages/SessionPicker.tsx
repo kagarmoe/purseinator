@@ -1,18 +1,17 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Clock, Timer, LayoutList } from "lucide-react";
 
 const sessions = [
   {
     minutes: 2,
-    icon: Clock,
-    label: "Quick Session",
-    description: "A swift round of comparisons",
+    label: "Quick Edit",
+    description: "A fast curation sprint — 2 minutes.",
+    icon: "◇",
   },
   {
     minutes: 5,
-    icon: Timer,
-    label: "Full Session",
-    description: "Deep dive into your collection",
+    label: "Full Review",
+    description: "A thorough session — 5 minutes.",
+    icon: "◈",
   },
 ];
 
@@ -25,38 +24,35 @@ export default function SessionPicker() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] flex flex-col items-center justify-center px-6">
+    <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <h1 className="font-[var(--font-serif)] text-4xl text-[var(--color-near-black)] text-center mb-2">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-3 text-center">
+          Session
+        </p>
+        <h1 className="font-serif text-4xl text-near-black text-center mb-2 leading-tight">
           Ready to rank?
         </h1>
-        <p className="text-[var(--color-muted)] text-xs tracking-widest uppercase text-center mb-10">
-          Choose your session length
+        <p className="text-muted text-sm text-center font-sans mb-10">
+          Choose how long you'd like to compare.
         </p>
 
-        <div className="space-y-3 mb-6">
-          {sessions.map(({ minutes, icon: Icon, label, description }) => (
+        <div className="space-y-3 mb-8">
+          {sessions.map((s, idx) => (
             <button
-              key={minutes}
-              onClick={() => start(minutes)}
-              className="group w-full text-left bg-[var(--color-white)] border border-[var(--color-near-black)]/10 hover:border-[var(--color-gold)] px-6 py-5 transition-all duration-200 cursor-pointer"
+              key={s.minutes}
+              onClick={() => start(s.minutes)}
+              className={`group w-full px-6 py-5 text-left transition-colors cursor-pointer ${
+                idx === 0
+                  ? "bg-terracotta text-white hover:bg-terracotta/90"
+                  : "bg-cobalt text-white hover:bg-cobalt/90"
+              }`}
             >
               <div className="flex items-start gap-4">
-                <Icon
-                  size={20}
-                  className="text-[var(--color-gold)] mt-0.5 shrink-0"
-                />
+                <span className="text-white/70 text-xl mt-0.5 shrink-0">{s.icon}</span>
                 <div>
-                  <div className="font-semibold text-[var(--color-near-black)] group-hover:text-[var(--color-gold)] transition-colors">
-                    {label}
-                  </div>
-                  <div className="text-[var(--color-muted)] text-sm mt-0.5">
-                    {description}
-                  </div>
+                  <div className="font-serif text-lg">{s.label}</div>
+                  <div className="text-white/70 text-xs font-sans mt-0.5">{s.description}</div>
                 </div>
-                <span className="ml-auto text-[var(--color-muted)] text-xs self-center shrink-0">
-                  {minutes} min
-                </span>
               </div>
             </button>
           ))}
@@ -64,22 +60,9 @@ export default function SessionPicker() {
 
         <button
           onClick={() => navigate(`/collection/${collectionId}`)}
-          className="group w-full text-left bg-transparent border border-[var(--color-near-black)]/10 hover:border-[var(--color-near-black)]/30 px-6 py-4 transition-all duration-200 cursor-pointer"
+          className="w-full text-center text-muted text-xs font-sans uppercase tracking-[0.15em] py-3 border border-dusty-rose hover:border-terracotta hover:text-near-black transition-colors cursor-pointer bg-transparent"
         >
-          <div className="flex items-center gap-4">
-            <LayoutList
-              size={20}
-              className="text-[var(--color-muted)] shrink-0"
-            />
-            <div>
-              <div className="font-medium text-[var(--color-near-black)] text-sm">
-                View Rankings
-              </div>
-              <div className="text-[var(--color-muted)] text-xs mt-0.5">
-                See your current standings
-              </div>
-            </div>
-          </div>
+          View Rankings
         </button>
       </div>
     </div>
