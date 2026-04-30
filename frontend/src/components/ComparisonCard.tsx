@@ -14,11 +14,9 @@ interface Props {
 
 export default function ComparisonCard({ itemA, itemB, infoLevel, onPick }: Props) {
   return (
-    <div style={{ display: "flex", gap: "1rem", justifyContent: "center", padding: "1rem" }}>
+    <div className="flex items-center gap-4 justify-center w-full max-w-xl px-2">
       <ItemCard item={itemA} infoLevel={infoLevel} onTap={() => onPick(itemA.id)} />
-      <div style={{ display: "flex", alignItems: "center", fontSize: "1.5rem", color: "#9ca3af" }}>
-        or
-      </div>
+      <span className="text-[10px] uppercase tracking-widest text-muted font-sans shrink-0">or</span>
       <ItemCard item={itemB} infoLevel={infoLevel} onTap={() => onPick(itemB.id)} />
     </div>
   );
@@ -39,54 +37,27 @@ function ItemCard({
   return (
     <button
       onClick={onTap}
-      style={{
-        flex: 1,
-        maxWidth: 300,
-        minHeight: 200,
-        padding: "1rem",
-        border: "2px solid #e5e7eb",
-        borderRadius: 16,
-        background: "white",
-        cursor: "pointer",
-        textAlign: "center",
-        transition: "transform 0.1s, border-color 0.1s",
-      }}
-      onPointerDown={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(0.97)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#2563eb";
-      }}
-      onPointerUp={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb";
-      }}
-      onPointerLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#e5e7eb";
-      }}
+      className="group flex-1 max-w-56 min-h-52 p-5 border border-cream bg-white text-center cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-lg hover:border-gold active:scale-[0.98]"
     >
-      <div
-        style={{
-          width: "100%",
-          height: 140,
-          background: "#f3f4f6",
-          borderRadius: 8,
-          marginBottom: "0.75rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "3rem",
-        }}
-      >
-        👜
-      </div>
+      {/* elegant gradient placeholder instead of bag emoji */}
+      <div className="w-full h-36 bg-gradient-to-br from-cream to-gold-light mb-4 rounded-sm" />
+
       {showBrand && (
-        <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>
-          {item.brand === "unknown" ? "Unknown brand" : item.brand}
+        <div className="font-serif text-base text-near-black">
+          {item.brand === "unknown" ? "Unknown" : item.brand}
         </div>
       )}
       {showCondition && item.condition_score !== null && (
-        <div style={{ color: "#6b7280", fontSize: "0.9rem", marginTop: "0.25rem" }}>
-          Condition: {Math.round(item.condition_score * 100)}%
+        <div className="mt-2">
+          <div className="h-0.5 bg-cream w-full rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gold"
+              style={{ width: `${Math.round(item.condition_score * 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-muted font-sans mt-1 uppercase tracking-widest">
+            {Math.round(item.condition_score * 100)}% condition
+          </p>
         </div>
       )}
     </button>

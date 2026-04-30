@@ -20,51 +20,56 @@ export default function Dashboard() {
     });
   }, []);
 
-  if (!user) return <p style={{ padding: "2rem", textAlign: "center" }}>Loading...</p>;
+  if (!user) {
+    return (
+      <div className="min-h-svh bg-surface flex items-center justify-center">
+        <p className="text-muted text-sm font-sans">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: 600, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "1.75rem", marginBottom: "1rem" }}>Operator Dashboard</h1>
+    <div className="min-h-svh bg-surface">
+      <header className="px-6 pt-10 pb-6 border-b border-cream">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
+          Operator
+        </p>
+        <h1 className="font-serif text-3xl text-near-black leading-tight">Dashboard</h1>
+      </header>
 
-      <h2 style={{ fontSize: "1.2rem", color: "#6b7280", marginBottom: "0.75rem" }}>Collections</h2>
+      <main className="px-6 py-8 max-w-2xl mx-auto">
+        <h2 className="text-[10px] uppercase tracking-[0.3em] text-muted font-sans mb-6">
+          Collections
+        </h2>
 
-      {collections.length === 0 ? (
-        <p style={{ color: "#9ca3af" }}>No collections yet. Use the CLI to create one.</p>
-      ) : (
-        collections.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              padding: "1rem",
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-              marginBottom: "0.5rem",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600 }}>{c.name}</div>
-              {c.description && (
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>{c.description}</div>
-              )}
-            </div>
-            <button
-              onClick={() => navigate(`/review/${c.id}`)}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: 6,
-                border: "1px solid #d1d5db",
-                background: "white",
-                cursor: "pointer",
-              }}
-            >
-              Review Items
-            </button>
+        {collections.length === 0 ? (
+          <p className="text-muted text-sm font-sans italic">
+            No collections yet. Use the CLI to create one.
+          </p>
+        ) : (
+          <div className="divide-y divide-cream">
+            {collections.map((c) => (
+              <div
+                key={c.id}
+                className="py-4 flex items-center justify-between gap-4"
+              >
+                <div className="min-w-0">
+                  <div className="font-serif text-base text-near-black">{c.name}</div>
+                  {c.description && (
+                    <div className="text-muted text-xs font-sans mt-0.5">{c.description}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate(`/review/${c.id}`)}
+                  className="shrink-0 text-xs font-sans uppercase tracking-[0.1em] border border-cream text-near-black px-4 py-2 hover:border-gold transition-colors cursor-pointer bg-transparent"
+                >
+                  Review Items
+                </button>
+              </div>
+            ))}
           </div>
-        ))
-      )}
+        )}
+      </main>
     </div>
   );
 }

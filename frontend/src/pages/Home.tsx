@@ -42,68 +42,85 @@ export default function Home() {
   };
 
   if (loading) {
-    return <p style={{ textAlign: "center", padding: "2rem", color: "#9ca3af" }}>Loading...</p>;
+    return (
+      <div className="min-h-svh bg-surface flex items-center justify-center">
+        <div className="space-y-3 w-full max-w-sm px-6">
+          <div className="h-8 bg-cream rounded animate-pulse" />
+          <div className="h-4 bg-cream rounded w-3/4 animate-pulse" />
+          <div className="h-24 bg-cream rounded animate-pulse" />
+          <div className="h-24 bg-cream rounded animate-pulse" />
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
-        <h1 style={{ fontSize: "2rem" }}>Purseinator</h1>
-        <p style={{ color: "#666", marginBottom: "1.5rem" }}>Sign in to start ranking your collection.</p>
-        {IS_DEV && (
-          <button onClick={handleDevLogin} style={devBtnStyle}>
-            Dev Login
-          </button>
-        )}
+      <div className="min-h-svh bg-surface flex flex-col items-center justify-center px-6">
+        <div className="text-center max-w-xs w-full">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
+            The Collection Edit
+          </p>
+          <h1 className="font-serif text-5xl text-near-black mb-6 leading-none">
+            PURSEINATOR
+          </h1>
+          <p className="text-muted text-sm mb-10 font-sans">
+            Sign in to start curating your collection.
+          </p>
+          {IS_DEV && (
+            <button
+              onClick={handleDevLogin}
+              className="px-8 py-3 border-2 border-dashed border-gold text-gold text-sm font-sans font-medium rounded-full hover:bg-gold hover:text-white transition-colors cursor-pointer"
+            >
+              Dev Login
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: 500, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Hi, {user.name}!</h1>
-      <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>Choose a collection to rank.</p>
+    <div className="min-h-svh bg-surface">
+      <header className="px-6 pt-12 pb-8 border-b border-cream">
+        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-2">
+          The Collection Edit
+        </p>
+        <h1 className="font-serif text-4xl text-near-black leading-tight">
+          PURSEINATOR
+        </h1>
+        <p className="text-muted text-sm mt-2 font-sans">
+          Welcome back, {user.name}.
+        </p>
+      </header>
 
-      {collections.length === 0 ? (
-        <p style={{ color: "#9ca3af" }}>No collections yet. Ask your operator to set one up.</p>
-      ) : (
-        collections.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => navigate(`/session/${c.id}`)}
-            style={{
-              display: "block",
-              width: "100%",
-              padding: "1.25rem",
-              marginBottom: "0.75rem",
-              textAlign: "left",
-              border: "2px solid #e5e7eb",
-              borderRadius: 12,
-              background: "white",
-              cursor: "pointer",
-              fontSize: "1.1rem",
-            }}
-          >
-            <div style={{ fontWeight: 600 }}>{c.name}</div>
-            {c.description && (
-              <div style={{ color: "#6b7280", fontSize: "0.9rem", marginTop: "0.25rem" }}>
-                {c.description}
-              </div>
-            )}
-          </button>
-        ))
-      )}
+      <main className="px-6 py-8 max-w-lg mx-auto">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-muted font-sans mb-6">
+          Your Collections
+        </h2>
+
+        {collections.length === 0 ? (
+          <p className="text-muted text-sm font-sans italic">
+            No collections yet. Ask your operator to set one up.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {collections.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/session/${c.id}`)}
+                className="group w-full text-left bg-white border border-cream px-6 py-5 hover:border-gold transition-colors cursor-pointer relative overflow-hidden"
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="font-serif text-lg text-near-black">{c.name}</div>
+                {c.description && (
+                  <div className="text-muted text-xs font-sans mt-1">{c.description}</div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
-
-const devBtnStyle: React.CSSProperties = {
-  padding: "0.75rem 2rem",
-  fontSize: "1rem",
-  fontWeight: 600,
-  color: "#f59e0b",
-  background: "transparent",
-  border: "2px dashed #f59e0b",
-  borderRadius: 8,
-  cursor: "pointer",
-};

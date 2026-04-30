@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ComparisonCard from "../components/ComparisonCard";
 import { getNextPair, submitComparison } from "../api";
@@ -37,18 +37,22 @@ export default function RankingSession() {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  const loadNext = useCallback(async () => {
+  const fetchNext = async () => {
     try {
       const data = await getNextPair(cid);
       setPair(data);
-    } catch (e) {
+    } catch {
       setError("Could not load next pair");
     }
-  }, [cid]);
+  };
 
   useEffect(() => {
-    loadNext();
-  }, [loadNext]);
+    let mounted = true;
+    getNextPair(cid)
+      .then((data) => { if (mounted) setPair(data); })
+      .catch(() => { if (mounted) setError("Could not load next pair"); });
+    return () => { mounted = false; };
+  }, [cid]);
 
   const handlePick = async (winnerId: number) => {
     if (!pair) return;
@@ -60,94 +64,90 @@ export default function RankingSession() {
         info_level_shown: pair.info_level,
       });
       setCount((c) => c + 1);
-      await loadNext();
+      await fetchNext();
     } catch {
       setError("Could not save comparison");
     }
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const progressPct = Math.max(0, (timeLeft / (minutes * 60)) * 100);
 
   if (done) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
-        <h1 style={{ fontSize: "2rem" }}>Nice work!</h1>
-        <p style={{ fontSize: "1.2rem", color: "#666", margin: "1rem 0" }}>
-          You compared {count} pairs.
-        </p>
-        <button
-          onClick={() => navigate(`/collection/${collectionId}`)}
-          style={actionBtn}
-        >
-          See Your Rankings
-        </button>
-        <button
-          onClick={() => navigate(`/session/${collectionId}`)}
-          style={{ ...actionBtn, background: "#6b7280" }}
-        >
-          Another Session
-        </button>
+      <div className="min-h-svh bg-surface flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
+            Session Complete
+          </p>
+          <h1 className="font-serif text-4xl text-near-black mb-3">Well done.</h1>
+          <p className="text-muted text-sm font-sans mb-10">
+            You compared {count} {count === 1 ? "pair" : "pairs"}.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate(`/collection/${collectionId}`)}
+              className="w-full bg-near-black text-white font-sans text-sm font-medium py-4 hover:bg-gold transition-colors cursor-pointer"
+            >
+              See Your Rankings
+            </button>
+            <button
+              onClick={() => navigate(`/session/${collectionId}`)}
+              className="w-full border border-cream text-near-black font-sans text-sm py-4 hover:border-gold transition-colors cursor-pointer bg-transparent"
+            >
+              Another Session
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "1rem", maxWidth: 700, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>
-          {formatTime(timeLeft)}
+    <div className="min-h-svh bg-surface flex flex-col">
+      {/* slim progress bar at top edge */}
+      <div className="h-0.5 bg-cream w-full">
+        <div
+          className="h-full bg-gold transition-all duration-1000 ease-linear"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {/* header bar */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <span className="font-serif text-lg text-near-black">{formatTime(timeLeft)}</span>
+        <span className="text-xs font-sans bg-cream text-muted px-3 py-1 rounded-full">
+          {count} compared
         </span>
-        <span style={{ color: "#6b7280" }}>{count} compared</span>
         <button
           onClick={() => { clearInterval(timerRef.current); setDone(true); }}
-          style={{ padding: "0.5rem 1rem", borderRadius: 8, border: "1px solid #d1d5db", background: "white", cursor: "pointer" }}
+          className="text-xs font-sans uppercase tracking-[0.1em] text-muted border border-cream px-4 py-1.5 hover:border-gold hover:text-near-black transition-colors cursor-pointer bg-transparent"
         >
           Done
         </button>
       </div>
 
-      <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2, marginBottom: "1rem" }}>
-        <div
-          style={{
-            height: "100%",
-            background: "#2563eb",
-            borderRadius: 2,
-            width: `${Math.max(0, (timeLeft / (minutes * 60)) * 100)}%`,
-            transition: "width 1s linear",
-          }}
-        />
+      {/* main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8">
+        {error && (
+          <p className="text-red-500 text-sm font-sans text-center mb-4">{error}</p>
+        )}
+
+        {pair ? (
+          <ComparisonCard
+            itemA={pair.item_a}
+            itemB={pair.item_b}
+            infoLevel={pair.info_level}
+            onPick={handlePick}
+          />
+        ) : (
+          <p className="text-muted text-sm font-sans">Loading...</p>
+        )}
+
+        <p className="text-muted text-xs font-sans uppercase tracking-[0.15em] mt-8">
+          Tap the piece you'd rather keep
+        </p>
       </div>
-
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-
-      {pair ? (
-        <ComparisonCard
-          itemA={pair.item_a}
-          itemB={pair.item_b}
-          infoLevel={pair.info_level}
-          onPick={handlePick}
-        />
-      ) : (
-        <p style={{ textAlign: "center", color: "#9ca3af" }}>Loading...</p>
-      )}
-
-      <p style={{ textAlign: "center", color: "#9ca3af", marginTop: "1rem", fontSize: "0.9rem" }}>
-        Tap the bag you'd rather keep
-      </p>
     </div>
   );
 }
-
-const actionBtn: React.CSSProperties = {
-  display: "block",
-  width: "100%",
-  padding: "1.25rem",
-  marginBottom: "0.75rem",
-  fontSize: "1.1rem",
-  fontWeight: 600,
-  color: "white",
-  background: "#2563eb",
-  border: "none",
-  borderRadius: 12,
-  cursor: "pointer",
-};

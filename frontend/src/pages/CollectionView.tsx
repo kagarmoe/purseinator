@@ -21,7 +21,6 @@ export default function CollectionView() {
   useEffect(() => {
     getRankedItems(cid).then((data) => {
       setItems(data);
-      // Default divider: after top half
       const keeperCount = data.filter((i: RankedItem) => i.status === "keeper").length;
       setDividerIndex(keeperCount > 0 ? keeperCount : Math.ceil(data.length / 2));
     });
@@ -31,7 +30,6 @@ export default function CollectionView() {
     if (newIndex < 0 || newIndex > items.length) return;
     setDividerIndex(newIndex);
 
-    // Update statuses based on divider position
     for (let i = 0; i < items.length; i++) {
       const newStatus = i < newIndex ? "keeper" : "seller";
       if (items[i].status !== newStatus) {
@@ -50,98 +48,76 @@ export default function CollectionView() {
   };
 
   return (
-    <div style={{ padding: "1rem", maxWidth: 500, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <h1 style={{ fontSize: "1.5rem", margin: 0 }}>Your Rankings</h1>
+    <div className="min-h-svh bg-surface">
+      <header className="px-6 pt-10 pb-6 border-b border-cream flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
+            Collection
+          </p>
+          <h1 className="font-serif text-3xl text-near-black leading-tight">Your Rankings</h1>
+        </div>
         <button
           onClick={() => navigate(`/session/${collectionId}`)}
-          style={{ padding: "0.5rem 1rem", borderRadius: 8, background: "#2563eb", color: "white", border: "none", cursor: "pointer" }}
+          className="text-xs font-sans uppercase tracking-[0.1em] border border-near-black text-near-black px-5 py-2 hover:bg-near-black hover:text-white transition-colors cursor-pointer bg-transparent"
         >
           Rank More
         </button>
-      </div>
+      </header>
 
-      {items.length === 0 ? (
-        <p style={{ color: "#9ca3af", textAlign: "center" }}>No items ranked yet.</p>
-      ) : (
-        <div>
-          {items.map((item, i) => (
-            <div key={item.id}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.75rem",
-                  background: i < (dividerIndex ?? 0) ? "#f0fdf4" : "#fef2f2",
-                  borderRadius: 8,
-                  marginBottom: 2,
-                }}
-              >
-                <span style={{ fontSize: "1.5rem", width: 32, textAlign: "center" }}>
-                  {i < (dividerIndex ?? 0) ? "💚" : "🔻"}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>
-                    #{i + 1} {item.brand === "unknown" ? "Unknown" : item.brand}
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-                    Rating: {Math.round(item.rating)} · {item.comparison_count} comparisons
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider line - show after the item at dividerIndex-1 */}
-              {dividerIndex !== null && i === dividerIndex - 1 && (
+      <main className="px-6 py-8 max-w-lg mx-auto">
+        {items.length === 0 ? (
+          <p className="text-muted text-sm font-sans italic">No items ranked yet.</p>
+        ) : (
+          <div>
+            {items.map((item, i) => (
+              <div key={item.id}>
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.5rem 0",
-                    cursor: "grab",
-                    userSelect: "none",
-                  }}
-                  onPointerDown={() => {}}
+                  className={`flex items-center gap-4 py-4 border-l-2 pl-4 mb-0.5 bg-white ${
+                    i < (dividerIndex ?? 0) ? "border-l-gold" : "border-l-cream"
+                  }`}
                 >
-                  <button
-                    onClick={() => moveDivider(dividerIndex - 1)}
-                    style={divBtnStyle}
-                    aria-label="Move divider up"
-                  >
-                    ▲
-                  </button>
-                  <div style={{ flex: 1, height: 3, background: "#f59e0b", borderRadius: 2 }} />
-                  <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    Keep above · Sell below
+                  <span className="font-serif text-3xl text-muted/40 w-10 text-center shrink-0 leading-none">
+                    {i + 1}
                   </span>
-                  <div style={{ flex: 1, height: 3, background: "#f59e0b", borderRadius: 2 }} />
-                  <button
-                    onClick={() => moveDivider(dividerIndex + 1)}
-                    style={divBtnStyle}
-                    aria-label="Move divider down"
-                  >
-                    ▼
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-serif text-base text-near-black">
+                      {item.brand === "unknown" ? "Unknown" : item.brand}
+                    </div>
+                    <div className="text-xs text-muted font-sans mt-0.5">
+                      {item.comparison_count} comparisons
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+
+                {/* gold divider bar between keep / sell */}
+                {dividerIndex !== null && i === dividerIndex - 1 && (
+                  <div className="flex items-center gap-3 py-3 my-1">
+                    <button
+                      onClick={() => moveDivider(dividerIndex - 1)}
+                      aria-label="Move divider up"
+                      className="w-7 h-7 rounded-full border border-gold text-gold text-xs flex items-center justify-center hover:bg-gold hover:text-white transition-colors cursor-pointer bg-transparent"
+                    >
+                      ▲
+                    </button>
+                    <div className="flex-1 h-px bg-gold" />
+                    <span className="text-[10px] uppercase tracking-widest text-gold font-sans whitespace-nowrap">
+                      Keep · Sell
+                    </span>
+                    <div className="flex-1 h-px bg-gold" />
+                    <button
+                      onClick={() => moveDivider(dividerIndex + 1)}
+                      aria-label="Move divider down"
+                      className="w-7 h-7 rounded-full border border-gold text-gold text-xs flex items-center justify-center hover:bg-gold hover:text-white transition-colors cursor-pointer bg-transparent"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
-
-const divBtnStyle: React.CSSProperties = {
-  width: 36,
-  height: 36,
-  borderRadius: "50%",
-  border: "2px solid #f59e0b",
-  background: "white",
-  cursor: "pointer",
-  fontSize: "0.9rem",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
