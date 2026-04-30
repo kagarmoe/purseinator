@@ -43,7 +43,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-svh bg-surface flex items-center justify-center">
+      <div className="min-h-svh bg-cream flex items-center justify-center">
         <div className="space-y-3 w-full max-w-sm px-6">
           <div className="h-8 bg-cream rounded animate-pulse" />
           <div className="h-4 bg-cream rounded w-3/4 animate-pulse" />
@@ -56,7 +56,7 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-svh bg-surface flex flex-col items-center justify-center px-6">
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-xs w-full">
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
             The Collection Edit
@@ -70,7 +70,7 @@ export default function Home() {
           {IS_DEV && (
             <button
               onClick={handleDevLogin}
-              className="px-8 py-3 border-2 border-dashed border-gold text-gold text-sm font-sans font-medium rounded-full hover:bg-gold hover:text-white transition-colors cursor-pointer"
+              className="px-8 py-3 border-2 border-dashed border-terracotta text-terracotta text-sm font-sans font-medium rounded-full hover:bg-terracotta hover:text-white transition-colors cursor-pointer"
             >
               Dev Login
             </button>
@@ -81,7 +81,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-svh bg-surface">
+    <div className="min-h-svh bg-cream">
       <header className="px-6 pt-12 pb-8 border-b border-cream">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-2">
           The Collection Edit
@@ -109,10 +109,9 @@ export default function Home() {
               <button
                 key={c.id}
                 onClick={() => navigate(`/session/${c.id}`)}
-                className="group w-full text-left bg-white border border-cream px-6 py-5 hover:border-gold transition-colors cursor-pointer relative overflow-hidden"
+                className="group w-full text-left bg-dusty-rose/20 border-l-4 border-l-terracotta border border-dusty-rose px-6 py-5 hover:bg-dusty-rose/40 transition-colors cursor-pointer"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="font-serif text-lg text-near-black">{c.name}</div>
+                <div className="font-serif text-lg text-near-black group-hover:text-terracotta transition-colors">{c.name}</div>
                 {c.description && (
                   <div className="text-muted text-xs font-sans mt-1">{c.description}</div>
                 )}

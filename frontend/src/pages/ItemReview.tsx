@@ -13,9 +13,9 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {
-    keeper: "bg-cream text-near-black border border-gold",
-    seller: "bg-near-black text-white border border-near-black",
-    unranked: "bg-transparent text-muted border border-cream",
+    keeper: "bg-forest text-white",
+    seller: "bg-terracotta text-white",
+    unranked: "bg-transparent text-muted border border-dusty-rose",
   };
   const cls = variants[status] ?? variants.unranked;
   return (
@@ -52,7 +52,7 @@ export default function ItemReview() {
   };
 
   return (
-    <div className="min-h-svh bg-surface">
+    <div className="min-h-svh bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
           Operator
@@ -77,13 +77,13 @@ export default function ItemReview() {
                         <input
                           value={editBrand}
                           onChange={(e) => setEditBrand(e.target.value)}
-                          className="font-serif text-base border-b border-gold bg-transparent outline-none text-near-black py-0.5 flex-1 min-w-0"
+                          className="font-serif text-base border-b border-terracotta bg-transparent outline-none text-near-black py-0.5 flex-1 min-w-0"
                           autoFocus
                           onKeyDown={(e) => e.key === "Enter" && saveBrand(item.id)}
                         />
                         <button
                           onClick={() => saveBrand(item.id)}
-                          className="text-[10px] uppercase tracking-widest font-sans border border-gold text-gold px-3 py-1.5 hover:bg-gold hover:text-white transition-colors cursor-pointer bg-transparent shrink-0"
+                          className="text-[10px] uppercase tracking-widest font-sans bg-terracotta text-white px-3 py-1.5 hover:bg-terracotta/80 transition-colors cursor-pointer shrink-0"
                         >
                           Save
                         </button>
@@ -91,7 +91,7 @@ export default function ItemReview() {
                     ) : (
                       <button
                         onClick={() => { setEditing(item.id); setEditBrand(item.brand); }}
-                        className="font-serif text-base text-near-black cursor-pointer hover:text-gold transition-colors bg-transparent border-none p-0 text-left"
+                        className="font-serif text-base text-near-black cursor-pointer hover:text-terracotta transition-colors bg-transparent border-none p-0 text-left"
                         title="Click to edit brand"
                       >
                         {item.brand === "unknown" ? "Unknown brand" : item.brand}
@@ -103,9 +103,9 @@ export default function ItemReview() {
 
                 {item.condition_score !== null && (
                   <div className="mt-3">
-                    <div className="h-px bg-cream w-full overflow-hidden">
+                    <div className="h-1 bg-dusty-rose/30 w-full overflow-hidden">
                       <div
-                        className="h-full bg-gold"
+                        className="h-full bg-saffron"
                         style={{ width: `${Math.round(item.condition_score * 100)}%` }}
                       />
                     </div>

@@ -75,7 +75,7 @@ export default function RankingSession() {
 
   if (done) {
     return (
-      <div className="min-h-svh bg-surface flex flex-col items-center justify-center px-6">
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
             Session Complete
@@ -87,13 +87,13 @@ export default function RankingSession() {
           <div className="space-y-3">
             <button
               onClick={() => navigate(`/collection/${collectionId}`)}
-              className="w-full bg-near-black text-white font-sans text-sm font-medium py-4 hover:bg-gold transition-colors cursor-pointer"
+              className="w-full bg-terracotta text-white font-sans text-sm font-medium py-4 hover:bg-terracotta/80 transition-colors cursor-pointer"
             >
               See Your Rankings
             </button>
             <button
               onClick={() => navigate(`/session/${collectionId}`)}
-              className="w-full border border-cream text-near-black font-sans text-sm py-4 hover:border-gold transition-colors cursor-pointer bg-transparent"
+              className="w-full bg-cobalt text-white font-sans text-sm py-4 hover:bg-cobalt/80 transition-colors cursor-pointer"
             >
               Another Session
             </button>
@@ -104,11 +104,11 @@ export default function RankingSession() {
   }
 
   return (
-    <div className="min-h-svh bg-surface flex flex-col">
+    <div className="min-h-svh bg-cream flex flex-col">
       {/* slim progress bar at top edge */}
       <div className="h-0.5 bg-cream w-full">
         <div
-          className="h-full bg-gold transition-all duration-1000 ease-linear"
+          className="h-full bg-terracotta transition-all duration-1000 ease-linear"
           style={{ width: `${progressPct}%` }}
         />
       </div>
@@ -121,7 +121,7 @@ export default function RankingSession() {
         </span>
         <button
           onClick={() => { clearInterval(timerRef.current); setDone(true); }}
-          className="text-xs font-sans uppercase tracking-[0.1em] text-muted border border-cream px-4 py-1.5 hover:border-gold hover:text-near-black transition-colors cursor-pointer bg-transparent"
+          className="text-xs font-sans uppercase tracking-[0.1em] bg-cobalt text-white px-4 py-1.5 hover:bg-cobalt/80 transition-colors cursor-pointer"
         >
           Done
         </button>

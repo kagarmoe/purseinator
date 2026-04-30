@@ -22,14 +22,14 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-svh bg-surface flex items-center justify-center">
+      <div className="min-h-svh bg-cream flex items-center justify-center">
         <p className="text-muted text-sm font-sans">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-svh bg-surface">
+    <div className="min-h-svh bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
           Operator
@@ -61,7 +61,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={() => navigate(`/review/${c.id}`)}
-                  className="shrink-0 text-xs font-sans uppercase tracking-[0.1em] border border-cream text-near-black px-4 py-2 hover:border-gold transition-colors cursor-pointer bg-transparent"
+                  className="shrink-0 text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-4 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
                 >
                   Review Items
                 </button>

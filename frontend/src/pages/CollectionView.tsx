@@ -48,7 +48,7 @@ export default function CollectionView() {
   };
 
   return (
-    <div className="min-h-svh bg-surface">
+    <div className="min-h-svh bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
@@ -58,7 +58,7 @@ export default function CollectionView() {
         </div>
         <button
           onClick={() => navigate(`/session/${collectionId}`)}
-          className="text-xs font-sans uppercase tracking-[0.1em] border border-near-black text-near-black px-5 py-2 hover:bg-near-black hover:text-white transition-colors cursor-pointer bg-transparent"
+          className="text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-5 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
         >
           Rank More
         </button>
@@ -72,8 +72,10 @@ export default function CollectionView() {
             {items.map((item, i) => (
               <div key={item.id}>
                 <div
-                  className={`flex items-center gap-4 py-4 border-l-2 pl-4 mb-0.5 bg-white ${
-                    i < (dividerIndex ?? 0) ? "border-l-gold" : "border-l-cream"
+                  className={`flex items-center gap-4 py-4 border-l-4 pl-4 mb-0.5 ${
+                    i < (dividerIndex ?? 0)
+                      ? "border-l-forest bg-forest/5"
+                      : "border-l-terracotta bg-terracotta/5"
                   }`}
                 >
                   <span className="font-serif text-3xl text-muted/40 w-10 text-center shrink-0 leading-none">
@@ -95,19 +97,19 @@ export default function CollectionView() {
                     <button
                       onClick={() => moveDivider(dividerIndex - 1)}
                       aria-label="Move divider up"
-                      className="w-7 h-7 rounded-full border border-gold text-gold text-xs flex items-center justify-center hover:bg-gold hover:text-white transition-colors cursor-pointer bg-transparent"
+                      className="w-7 h-7 rounded-full border border-saffron text-saffron text-xs flex items-center justify-center hover:bg-saffron hover:text-white transition-colors cursor-pointer bg-transparent"
                     >
                       ▲
                     </button>
-                    <div className="flex-1 h-px bg-gold" />
-                    <span className="text-[10px] uppercase tracking-widest text-gold font-sans whitespace-nowrap">
+                    <div className="flex-1 h-[3px] bg-saffron" />
+                    <span className="text-[10px] uppercase tracking-widest text-saffron font-sans whitespace-nowrap font-semibold">
                       Keep · Sell
                     </span>
-                    <div className="flex-1 h-px bg-gold" />
+                    <div className="flex-1 h-[3px] bg-saffron" />
                     <button
                       onClick={() => moveDivider(dividerIndex + 1)}
                       aria-label="Move divider down"
-                      className="w-7 h-7 rounded-full border border-gold text-gold text-xs flex items-center justify-center hover:bg-gold hover:text-white transition-colors cursor-pointer bg-transparent"
+                      className="w-7 h-7 rounded-full border border-saffron text-saffron text-xs flex items-center justify-center hover:bg-saffron hover:text-white transition-colors cursor-pointer bg-transparent"
                     >
                       ▼
                     </button>
