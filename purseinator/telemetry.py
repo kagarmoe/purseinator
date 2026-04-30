@@ -5,7 +5,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 
 
-def setup_telemetry(service_name: str = "bagfolio", export: bool = True):
+def setup_telemetry(service_name: str = "purseinator", export: bool = True):
     resource = Resource.create({"service.name": service_name})
     provider = TracerProvider(resource=resource)
 

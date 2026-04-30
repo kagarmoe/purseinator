@@ -7,10 +7,10 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.auth import create_magic_token, create_session_id, verify_magic_token
-from bagfolio.config import get_settings
-from bagfolio.deps import get_current_user, get_db
-from bagfolio.models import SessionTable, UserTable
+from purseinator.auth import create_magic_token, create_session_id, verify_magic_token
+from purseinator.config import get_settings
+from purseinator.deps import get_current_user, get_db
+from purseinator.models import SessionTable, UserTable
 
 router = APIRouter()
 
@@ -63,7 +63,7 @@ async def dev_login(db: AsyncSession = Depends(get_db)):
     if not settings.dev_mode:
         raise HTTPException(status_code=404, detail="Not found")
 
-    email = "dev@bagfolio.local"
+    email = "dev@purseinator.local"
     result = await db.execute(select(UserTable).where(UserTable.email == email))
     user = result.scalar_one_or_none()
     if user is None:

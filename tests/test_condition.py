@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from bagfolio.enrich.condition import estimate_condition, score_to_label
+from purseinator.enrich.condition import estimate_condition, score_to_label
 
 
 def test_estimate_condition_returns_score():

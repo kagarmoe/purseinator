@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from bagfolio.config import get_settings
-from bagfolio.models import Base
+from purseinator.config import get_settings
+from purseinator.models import Base
 
 config = context.config
 

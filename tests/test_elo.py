@@ -1,5 +1,5 @@
 import pytest
-from bagfolio.services.elo import calculate_new_ratings, expected_score, k_factor_for_item
+from purseinator.services.elo import calculate_new_ratings, expected_score, k_factor_for_item
 
 
 def test_expected_score_equal_ratings():

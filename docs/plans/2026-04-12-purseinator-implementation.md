@@ -1,4 +1,4 @@
-# Bagfolio MVP Implementation Plan
+# Purseinator MVP Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -16,9 +16,9 @@
 
 **Files:**
 - Create: `pyproject.toml`
-- Create: `bagfolio/__init__.py`
-- Create: `bagfolio/main.py`
-- Create: `bagfolio/config.py`
+- Create: `purseinator/__init__.py`
+- Create: `purseinator/main.py`
+- Create: `purseinator/config.py`
 - Create: `tests/__init__.py`
 - Create: `tests/conftest.py`
 - Create: `.gitignore`
@@ -35,7 +35,7 @@
 
 ```toml
 [project]
-name = "bagfolio"
+name = "purseinator"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
@@ -58,38 +58,38 @@ dev = ["pytest>=8.1", "pytest-asyncio>=0.23", "httpx>=0.27"]
 gpu = ["torch>=2.2", "opencv-python>=4.9", "pillow>=10.2"]
 
 [project.scripts]
-bagfolio = "bagfolio.cli:app"
+purseinator = "purseinator.cli:app"
 ```
 
 **Step 2: Create .gitignore**
 
 Standard Python + Node gitignore: `__pycache__`, `.venv`, `node_modules`, `dist`, `.env`, `*.pyc`, `alembic/versions/*.pyc`.
 
-**Step 3: Create bagfolio/config.py**
+**Step 3: Create purseinator/config.py**
 
 ```python
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://localhost:5432/bagfolio"
+    database_url: str = "postgresql+asyncpg://localhost:5432/purseinator"
     photo_storage_root: str = "./photos"
     secret_key: str = "change-me-in-production"
     magic_link_expiry_minutes: int = 15
     session_expiry_days: int = 30
     
-    model_config = {"env_prefix": "BAGFOLIO_"}
+    model_config = {"env_prefix": "PURSEINATOR_"}
 
 def get_settings() -> Settings:
     return Settings()
 ```
 
-**Step 4: Create bagfolio/main.py with minimal FastAPI app**
+**Step 4: Create purseinator/main.py with minimal FastAPI app**
 
 ```python
 from fastapi import FastAPI
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Bagfolio", version="0.1.0")
+    app = FastAPI(title="Purseinator", version="0.1.0")
 
     @app.get("/health")
     async def health() -> dict:
@@ -105,7 +105,7 @@ app = create_app()
 ```python
 import pytest
 from httpx import ASGITransport, AsyncClient
-from bagfolio.main import create_app
+from purseinator.main import create_app
 
 @pytest.fixture
 def app():
@@ -133,19 +133,19 @@ async def test_health(client):
     assert resp.json() == {"status": "ok"}
 ```
 
-Run: `cd /Users/kimberlygarmoe/repos/bagfolio && python -m pytest tests/test_health.py -v`
+Run: `cd /Users/kimberlygarmoe/repos/purseinator && python -m pytest tests/test_health.py -v`
 Expected: PASS
 
 **Step 7: Scaffold React frontend with Vite**
 
-Run: `cd /Users/kimberlygarmoe/repos/bagfolio && npm create vite@latest frontend -- --template react-ts`
+Run: `cd /Users/kimberlygarmoe/repos/purseinator && npm create vite@latest frontend -- --template react-ts`
 
-Create a minimal `App.tsx` that renders "Bagfolio" text.
+Create a minimal `App.tsx` that renders "Purseinator" text.
 
 **Step 8: Commit**
 
 ```bash
-git add pyproject.toml bagfolio/ tests/ .gitignore alembic.ini alembic/ frontend/
+git add pyproject.toml purseinator/ tests/ .gitignore alembic.ini alembic/ frontend/
 git commit -m "feat: scaffold project — FastAPI backend, React frontend, test infrastructure"
 ```
 
@@ -154,8 +154,8 @@ git commit -m "feat: scaffold project — FastAPI backend, React frontend, test 
 ## Task 2: Database Schema & Models
 
 **Files:**
-- Create: `bagfolio/models.py`
-- Create: `bagfolio/database.py`
+- Create: `purseinator/models.py`
+- Create: `purseinator/database.py`
 - Create: `alembic/env.py` (update)
 - Create: `alembic/versions/001_initial_schema.py`
 - Create: `tests/test_models.py`
@@ -165,7 +165,7 @@ git commit -m "feat: scaffold project — FastAPI backend, React frontend, test 
 ```python
 # tests/test_models.py
 import pytest
-from bagfolio.models import UserCreate, ItemCreate, ComparisonCreate
+from purseinator.models import UserCreate, ItemCreate, ComparisonCreate
 
 def test_user_create_valid():
     user = UserCreate(email="rachel@example.com", name="Rachel", role="curator")
@@ -191,7 +191,7 @@ def test_comparison_create():
 Run: `python -m pytest tests/test_models.py -v`
 Expected: FAIL — models don't exist yet
 
-**Step 2: Create bagfolio/models.py with Pydantic schemas + SQLAlchemy tables**
+**Step 2: Create purseinator/models.py with Pydantic schemas + SQLAlchemy tables**
 
 Pydantic models (frozen, for API layer):
 - `UserCreate`, `UserRead` — email, name, role (operator|curator)
@@ -207,11 +207,11 @@ SQLAlchemy table definitions (declarative base):
 - Proper foreign keys, indexes on collection_id, user_id
 - `info_level_shown` as an enum: photos_only, brand, condition, price
 
-**Step 3: Create bagfolio/database.py**
+**Step 3: Create purseinator/database.py**
 
 ```python
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from bagfolio.config import get_settings
+from purseinator.config import get_settings
 
 def get_engine():
     return create_async_engine(get_settings().database_url)
@@ -234,7 +234,7 @@ Expected: PASS
 **Step 6: Commit**
 
 ```bash
-git add bagfolio/models.py bagfolio/database.py alembic/ tests/test_models.py
+git add purseinator/models.py purseinator/database.py alembic/ tests/test_models.py
 git commit -m "feat: database schema — all 7 tables with Pydantic models and initial migration"
 ```
 
@@ -243,8 +243,8 @@ git commit -m "feat: database schema — all 7 tables with Pydantic models and i
 ## Task 3: Auth — Magic Link + Persistent Sessions
 
 **Files:**
-- Create: `bagfolio/auth.py`
-- Create: `bagfolio/routes/auth.py`
+- Create: `purseinator/auth.py`
+- Create: `purseinator/routes/auth.py`
 - Create: `tests/test_auth.py`
 
 **Step 1: Write failing tests**
@@ -287,7 +287,7 @@ async def test_session_persists(client):
 Run: `python -m pytest tests/test_auth.py -v`
 Expected: FAIL
 
-**Step 2: Implement bagfolio/auth.py**
+**Step 2: Implement purseinator/auth.py**
 
 Pure functions:
 - `create_magic_token(email: str, secret: str, expiry_minutes: int) -> str` — JWT or signed token
@@ -297,7 +297,7 @@ Pure functions:
 
 Need a `sessions` table (or add to existing schema): `id, user_id, session_id, created_at, expires_at`.
 
-**Step 3: Implement bagfolio/routes/auth.py**
+**Step 3: Implement purseinator/routes/auth.py**
 
 Routes:
 - `POST /auth/magic-link` — accepts email, creates token, returns it (in prod: sends email)
@@ -308,7 +308,7 @@ Routes:
 **Step 4: Wire routes into main.py**
 
 ```python
-from bagfolio.routes import auth
+from purseinator.routes import auth
 app.include_router(auth.router, prefix="/auth")
 ```
 
@@ -320,7 +320,7 @@ Expected: PASS
 **Step 6: Commit**
 
 ```bash
-git add bagfolio/auth.py bagfolio/routes/ tests/test_auth.py bagfolio/main.py
+git add purseinator/auth.py purseinator/routes/ tests/test_auth.py purseinator/main.py
 git commit -m "feat: magic link auth with persistent sessions"
 ```
 
@@ -329,10 +329,10 @@ git commit -m "feat: magic link auth with persistent sessions"
 ## Task 4: Collection & Item CRUD API
 
 **Files:**
-- Create: `bagfolio/routes/collections.py`
-- Create: `bagfolio/routes/items.py`
-- Create: `bagfolio/services/collections.py`
-- Create: `bagfolio/services/items.py`
+- Create: `purseinator/routes/collections.py`
+- Create: `purseinator/routes/items.py`
+- Create: `purseinator/services/collections.py`
+- Create: `purseinator/services/items.py`
 - Create: `tests/test_collections.py`
 - Create: `tests/test_items.py`
 
@@ -393,14 +393,14 @@ Expected: FAIL
 **Step 3: Implement services (pure functions)**
 
 ```python
-# bagfolio/services/collections.py
+# purseinator/services/collections.py
 async def create_collection(db, owner_id: int, data: CollectionCreate) -> CollectionRead: ...
 async def list_collections(db, owner_id: int) -> list[CollectionRead]: ...
 async def get_collection(db, collection_id: int) -> CollectionRead | None: ...
 ```
 
 ```python
-# bagfolio/services/items.py
+# purseinator/services/items.py
 async def create_item(db, collection_id: int, data: ItemCreate) -> ItemRead: ...
 async def update_item(db, item_id: int, data: ItemUpdate) -> ItemRead: ...
 async def list_items(db, collection_id: int) -> list[ItemRead]: ...
@@ -425,7 +425,7 @@ Expected: PASS
 **Step 6: Commit**
 
 ```bash
-git add bagfolio/routes/ bagfolio/services/ tests/
+git add purseinator/routes/ purseinator/services/ tests/
 git commit -m "feat: collection and item CRUD API"
 ```
 
@@ -434,8 +434,8 @@ git commit -m "feat: collection and item CRUD API"
 ## Task 5: Photo Upload & Serving
 
 **Files:**
-- Create: `bagfolio/services/photos.py`
-- Create: `bagfolio/routes/photos.py`
+- Create: `purseinator/services/photos.py`
+- Create: `purseinator/routes/photos.py`
 - Create: `tests/test_photos.py`
 
 **Step 1: Write failing tests**
@@ -484,7 +484,7 @@ Expected: FAIL
 **Step 2: Implement photo service**
 
 ```python
-# bagfolio/services/photos.py
+# purseinator/services/photos.py
 from pathlib import Path
 
 def build_storage_key(collection_id: int, item_id: int, filename: str) -> str:
@@ -514,7 +514,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add bagfolio/services/photos.py bagfolio/routes/photos.py tests/test_photos.py
+git add purseinator/services/photos.py purseinator/routes/photos.py tests/test_photos.py
 git commit -m "feat: photo upload and serving with filesystem storage"
 ```
 
@@ -523,8 +523,8 @@ git commit -m "feat: photo upload and serving with filesystem storage"
 ## Task 6: Elo Ranking Engine
 
 **Files:**
-- Create: `bagfolio/services/elo.py`
-- Create: `bagfolio/services/pairing.py`
+- Create: `purseinator/services/elo.py`
+- Create: `purseinator/services/pairing.py`
 - Create: `tests/test_elo.py`
 - Create: `tests/test_pairing.py`
 
@@ -532,7 +532,7 @@ git commit -m "feat: photo upload and serving with filesystem storage"
 
 ```python
 # tests/test_elo.py
-from bagfolio.services.elo import calculate_new_ratings, expected_score
+from purseinator.services.elo import calculate_new_ratings, expected_score
 
 def test_expected_score_equal_ratings():
     score = expected_score(1500, 1500)
@@ -555,7 +555,7 @@ def test_calculate_new_ratings_sum_preserved():
     assert winner_new + loser_new == pytest.approx(3000)
 
 def test_k_factor_decreases_with_comparisons():
-    from bagfolio.services.elo import k_factor_for_item
+    from purseinator.services.elo import k_factor_for_item
     assert k_factor_for_item(comparison_count=0) == 32
     assert k_factor_for_item(comparison_count=10) < 32
     assert k_factor_for_item(comparison_count=30) < k_factor_for_item(comparison_count=10)
@@ -567,7 +567,7 @@ Expected: FAIL
 **Step 2: Implement Elo engine (pure functions)**
 
 ```python
-# bagfolio/services/elo.py
+# purseinator/services/elo.py
 import math
 
 def expected_score(rating_a: float, rating_b: float) -> float:
@@ -595,7 +595,7 @@ Expected: PASS
 
 ```python
 # tests/test_pairing.py
-from bagfolio.services.pairing import select_pair, info_level_for_gap
+from purseinator.services.pairing import select_pair, info_level_for_gap
 
 def test_select_pair_prefers_similar_ratings():
     ratings = [
@@ -630,7 +630,7 @@ Expected: FAIL
 **Step 5: Implement pairing logic**
 
 ```python
-# bagfolio/services/pairing.py
+# purseinator/services/pairing.py
 import random
 
 def info_level_for_gap(elo_gap: float) -> str:
@@ -677,7 +677,7 @@ Expected: PASS
 **Step 7: Commit**
 
 ```bash
-git add bagfolio/services/elo.py bagfolio/services/pairing.py tests/test_elo.py tests/test_pairing.py
+git add purseinator/services/elo.py purseinator/services/pairing.py tests/test_elo.py tests/test_pairing.py
 git commit -m "feat: Elo ranking engine with adaptive pairing and info escalation"
 ```
 
@@ -686,8 +686,8 @@ git commit -m "feat: Elo ranking engine with adaptive pairing and info escalatio
 ## Task 7: Ranking API Endpoints
 
 **Files:**
-- Create: `bagfolio/routes/ranking.py`
-- Create: `bagfolio/services/ranking.py`
+- Create: `purseinator/routes/ranking.py`
+- Create: `purseinator/services/ranking.py`
 - Create: `tests/test_ranking.py`
 
 **Step 1: Write failing tests**
@@ -752,7 +752,7 @@ Expected: FAIL
 **Step 2: Implement ranking service**
 
 ```python
-# bagfolio/services/ranking.py
+# purseinator/services/ranking.py
 async def initialize_ratings(db, collection_id: int, user_id: int) -> None:
     """Create EloRating records (1500) for all items in collection that don't have one."""
     ...
@@ -784,7 +784,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add bagfolio/routes/ranking.py bagfolio/services/ranking.py tests/test_ranking.py
+git add purseinator/routes/ranking.py purseinator/services/ranking.py tests/test_ranking.py
 git commit -m "feat: ranking API — next pair, submit comparison, ranked list"
 ```
 
@@ -931,10 +931,10 @@ git commit -m "feat: operator dashboard — item review, photo group split/merge
 ## Task 10: CLI — Ingest Command
 
 **Files:**
-- Create: `bagfolio/cli.py`
-- Create: `bagfolio/ingest/__init__.py`
-- Create: `bagfolio/ingest/card_detector.py`
-- Create: `bagfolio/ingest/grouper.py`
+- Create: `purseinator/cli.py`
+- Create: `purseinator/ingest/__init__.py`
+- Create: `purseinator/ingest/card_detector.py`
+- Create: `purseinator/ingest/grouper.py`
 - Create: `tests/test_card_detector.py`
 - Create: `tests/test_grouper.py`
 
@@ -943,7 +943,7 @@ git commit -m "feat: operator dashboard — item review, photo group split/merge
 ```python
 # tests/test_card_detector.py
 import numpy as np
-from bagfolio.ingest.card_detector import is_delimiter_card
+from purseinator.ingest.card_detector import is_delimiter_card
 
 def test_neon_green_card_detected():
     # Create a fake image that is mostly neon green
@@ -970,7 +970,7 @@ Expected: FAIL
 **Step 2: Implement card detector**
 
 ```python
-# bagfolio/ingest/card_detector.py
+# purseinator/ingest/card_detector.py
 import cv2
 import numpy as np
 
@@ -996,7 +996,7 @@ Expected: PASS
 
 ```python
 # tests/test_grouper.py
-from bagfolio.ingest.grouper import group_photos
+from purseinator.ingest.grouper import group_photos
 
 def test_group_by_card():
     # Simulate: card, photo, photo, card, photo
@@ -1027,7 +1027,7 @@ Expected: FAIL
 **Step 5: Implement grouper**
 
 ```python
-# bagfolio/ingest/grouper.py
+# purseinator/ingest/grouper.py
 
 def group_photos(
     filenames: list[str],
@@ -1056,7 +1056,7 @@ Expected: PASS
 **Step 7: Implement CLI ingest command**
 
 ```python
-# bagfolio/cli.py
+# purseinator/cli.py
 import typer
 app = typer.Typer()
 
@@ -1082,7 +1082,7 @@ Expected: ALL PASS
 **Step 9: Commit**
 
 ```bash
-git add bagfolio/cli.py bagfolio/ingest/ tests/test_card_detector.py tests/test_grouper.py
+git add purseinator/cli.py purseinator/ingest/ tests/test_card_detector.py tests/test_grouper.py
 git commit -m "feat: CLI ingest command — neon green card detection and photo grouping"
 ```
 
@@ -1091,8 +1091,8 @@ git commit -m "feat: CLI ingest command — neon green card detection and photo 
 ## Task 11: CLI — Push Command
 
 **Files:**
-- Modify: `bagfolio/cli.py`
-- Create: `bagfolio/cli_client.py`
+- Modify: `purseinator/cli.py`
+- Create: `purseinator/cli_client.py`
 - Create: `tests/test_cli_push.py`
 
 **Step 1: Write failing tests**
@@ -1100,7 +1100,7 @@ git commit -m "feat: CLI ingest command — neon green card detection and photo 
 ```python
 # tests/test_cli_push.py
 from unittest.mock import AsyncMock
-from bagfolio.cli_client import push_collection
+from purseinator.cli_client import push_collection
 
 @pytest.mark.asyncio
 async def test_push_creates_items(mock_api):
@@ -1122,7 +1122,7 @@ Expected: FAIL
 **Step 2: Implement CLI client**
 
 ```python
-# bagfolio/cli_client.py
+# purseinator/cli_client.py
 import httpx
 from pathlib import Path
 
@@ -1149,9 +1149,9 @@ def push(
     manifest_path: str,
     photo_dir: str,
     server_url: str = typer.Option("http://localhost:8000"),
-    api_key: str = typer.Option(..., envvar="BAGFOLIO_API_KEY"),
+    api_key: str = typer.Option(..., envvar="PURSEINATOR_API_KEY"),
 ):
-    """Push ingested photos to the Bagfolio server."""
+    """Push ingested photos to the Purseinator server."""
     ...
 ```
 
@@ -1163,7 +1163,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add bagfolio/cli.py bagfolio/cli_client.py tests/test_cli_push.py
+git add purseinator/cli.py purseinator/cli_client.py tests/test_cli_push.py
 git commit -m "feat: CLI push command — batch upload items and photos to server"
 ```
 
@@ -1172,9 +1172,9 @@ git commit -m "feat: CLI push command — batch upload items and photos to serve
 ## Task 12: CLI — Enrich Command (GPU Condition Estimation)
 
 **Files:**
-- Modify: `bagfolio/cli.py`
-- Create: `bagfolio/enrich/__init__.py`
-- Create: `bagfolio/enrich/condition.py`
+- Modify: `purseinator/cli.py`
+- Create: `purseinator/enrich/__init__.py`
+- Create: `purseinator/enrich/condition.py`
 - Create: `tests/test_condition.py`
 
 **Step 1: Write failing tests**
@@ -1182,7 +1182,7 @@ git commit -m "feat: CLI push command — batch upload items and photos to serve
 ```python
 # tests/test_condition.py
 import numpy as np
-from bagfolio.enrich.condition import estimate_condition
+from purseinator.enrich.condition import estimate_condition
 
 def test_estimate_condition_returns_score():
     fake_image = np.zeros((224, 224, 3), dtype=np.uint8)
@@ -1204,7 +1204,7 @@ Expected: FAIL
 **Step 2: Implement condition estimation**
 
 ```python
-# bagfolio/enrich/condition.py
+# purseinator/enrich/condition.py
 import numpy as np
 
 def score_to_label(score: float) -> str:
@@ -1246,7 +1246,7 @@ Note: The actual model integration is a separate research task. This placeholder
 def enrich(
     collection_id: int,
     server_url: str = typer.Option("http://localhost:8000"),
-    api_key: str = typer.Option(..., envvar="BAGFOLIO_API_KEY"),
+    api_key: str = typer.Option(..., envvar="PURSEINATOR_API_KEY"),
 ):
     """Run GPU condition estimation on all items in a collection."""
     # 1. Fetch items from server
@@ -1265,7 +1265,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add bagfolio/cli.py bagfolio/enrich/ tests/test_condition.py
+git add purseinator/cli.py purseinator/enrich/ tests/test_condition.py
 git commit -m "feat: CLI enrich command — GPU condition estimation (placeholder model)"
 ```
 
@@ -1274,18 +1274,18 @@ git commit -m "feat: CLI enrich command — GPU condition estimation (placeholde
 ## Task 13: OpenTelemetry Integration
 
 **Files:**
-- Modify: `bagfolio/main.py`
-- Create: `bagfolio/telemetry.py`
+- Modify: `purseinator/main.py`
+- Create: `purseinator/telemetry.py`
 - Create: `tests/test_telemetry.py`
 
 **Step 1: Write failing test**
 
 ```python
 # tests/test_telemetry.py
-from bagfolio.telemetry import setup_telemetry
+from purseinator.telemetry import setup_telemetry
 
 def test_setup_telemetry_returns_tracer():
-    tracer = setup_telemetry(service_name="bagfolio-test", export=False)
+    tracer = setup_telemetry(service_name="purseinator-test", export=False)
     assert tracer is not None
 ```
 
@@ -1295,13 +1295,13 @@ Expected: FAIL
 **Step 2: Implement telemetry setup**
 
 ```python
-# bagfolio/telemetry.py
+# purseinator/telemetry.py
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-def setup_telemetry(service_name: str = "bagfolio", export: bool = True):
+def setup_telemetry(service_name: str = "purseinator", export: bool = True):
     resource = Resource.create({"service.name": service_name})
     provider = TracerProvider(resource=resource)
     
@@ -1322,7 +1322,7 @@ def instrument_app(app):
 **Step 3: Wire into main.py**
 
 ```python
-from bagfolio.telemetry import setup_telemetry, instrument_app
+from purseinator.telemetry import setup_telemetry, instrument_app
 
 def create_app() -> FastAPI:
     app = FastAPI(...)
@@ -1339,7 +1339,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add bagfolio/telemetry.py bagfolio/main.py tests/test_telemetry.py
+git add purseinator/telemetry.py purseinator/main.py tests/test_telemetry.py
 git commit -m "feat: OpenTelemetry integration with Grafana Cloud export"
 ```
 
@@ -1365,8 +1365,8 @@ stay in those buckets across additional comparisons).
 Usage: python simulations/elo_convergence.py --items 200 --sessions 20
 """
 import random
-from bagfolio.services.elo import calculate_new_ratings, k_factor_for_item
-from bagfolio.services.pairing import select_pair
+from purseinator.services.elo import calculate_new_ratings, k_factor_for_item
+from purseinator.services.pairing import select_pair
 
 def simulate(
     num_items: int,

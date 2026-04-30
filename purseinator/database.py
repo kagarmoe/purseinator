@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bagfolio.config import get_settings
+from purseinator.config import get_settings
 
 
 def get_engine(url: str | None = None):

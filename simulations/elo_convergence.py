@@ -1,4 +1,4 @@
-"""Elo convergence simulation for Bagfolio.
+"""Elo convergence simulation for Purseinator.
 
 Simulates repeated pairwise comparisons against hidden true preferences
 and measures how quickly Elo rankings converge to the true ranking.
@@ -9,11 +9,11 @@ import random
 import sys
 import os
 
-# Add project root to path so we can import bagfolio modules
+# Add project root to path so we can import purseinator modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bagfolio.services.elo import calculate_new_ratings, k_factor_for_item
-from bagfolio.services.pairing import select_pair
+from purseinator.services.elo import calculate_new_ratings, k_factor_for_item
+from purseinator.services.pairing import select_pair
 
 
 def kendall_tau_distance(ranking_a: list, ranking_b: list) -> float:

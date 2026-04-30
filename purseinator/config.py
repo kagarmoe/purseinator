@@ -6,9 +6,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = {"env_prefix": "BAGFOLIO_"}
+    model_config = {"env_prefix": "PURSEINATOR_"}
 
-    database_url: str = "sqlite+aiosqlite:///./bagfolio.db"
+    database_url: str = "sqlite+aiosqlite:///./purseinator.db"
     photo_storage_root: Path = Path("./photos")
     secret_key: str = "change-me-in-production"
     magic_link_expiry_minutes: int = 15

@@ -1,4 +1,4 @@
-# Bagfolio — Design Document
+# Purseinator — Design Document
 
 ## Problem
 
@@ -59,7 +59,7 @@ Full API contract designed up front (including V2 endpoints). V2 endpoints are d
 
 **CLI → Server communication:** The operator CLI is a REST client calling the same FastAPI endpoints as the frontend, authenticated with operator role.
 
-**Photo upload:** Multipart batch upload via CLI command `bagfolio push <collection_id>`. Uploads all new/changed photos for a collection with progress feedback. Photos stored on the server filesystem using storage keys (e.g., `collections/123/items/456/photo_001.jpg`) — relative keys that work whether serving from filesystem today or object storage later.
+**Photo upload:** Multipart batch upload via CLI command `purseinator push <collection_id>`. Uploads all new/changed photos for a collection with progress feedback. Photos stored on the server filesystem using storage keys (e.g., `collections/123/items/456/photo_001.jpg`) — relative keys that work whether serving from filesystem today or object storage later.
 
 ### Data Model
 
@@ -79,7 +79,7 @@ Full schema from day one, including V2 fields. Empty columns/tables are cheaper 
 
 1. Operator shoots with dedicated camera, placing a **neon green card** between each item
 2. SD card dumped to local machine
-3. `bagfolio ingest ./photos/` — OpenCV color thresholding detects the neon green card, splits photo stream into item groups
+3. `purseinator ingest ./photos/` — OpenCV color thresholding detects the neon green card, splits photo stream into item groups
 4. First photo after each card = hero/thumbnail
 5. Each group → one `item` record with linked `item_photos`
 6. Operator does a quick review pass in the web dashboard: fix any mis-groupings (split/merge), enter brand names ("unknown" is valid)
@@ -200,8 +200,8 @@ Solves the real problem that low-value items aren't worth listing individually.
 ## MVP Scope
 
 **MVP (v1):**
-- CLI: `bagfolio ingest` — SD card photo dump, neon green card splitting, manual split/merge fallback
-- CLI: `bagfolio enrich` — GPU condition estimation
+- CLI: `purseinator ingest` — SD card photo dump, neon green card splitting, manual split/merge fallback
+- CLI: `purseinator enrich` — GPU condition estimation
 - CLI → Server: REST API (operator-authenticated)
 - Web: Rachel's ranking UI — touch-friendly, info escalation (3 tiers), short sessions, Elo, offline resilience
 - Web: Movable keeper/seller dividing line on ranked collection

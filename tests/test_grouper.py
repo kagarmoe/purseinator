@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bagfolio.ingest.grouper import group_photos
+from purseinator.ingest.grouper import group_photos
 
 
 def test_group_by_card():

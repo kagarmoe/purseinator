@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.deps import get_current_user, get_db
-from bagfolio.models import UserTable
-from bagfolio.services.ranking import get_next_pair, get_ranked_items, record_comparison
+from purseinator.deps import get_current_user, get_db
+from purseinator.models import UserTable
+from purseinator.services.ranking import get_next_pair, get_ranked_items, record_comparison
 
 router = APIRouter()
 

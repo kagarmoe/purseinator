@@ -7,8 +7,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.deps import get_current_user, get_db
-from bagfolio.models import ItemPhotoRead, ItemPhotoTable, UserTable
+from purseinator.deps import get_current_user, get_db
+from purseinator.models import ItemPhotoRead, ItemPhotoTable, UserTable
 
 router = APIRouter()
 

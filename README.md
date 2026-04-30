@@ -1,4 +1,4 @@
-# Bagfolio
+# Purseinator
 
 A web app for curating handbag collections through pairwise comparisons. An operator photographs and ingests items via CLI; a curator ranks them through short, touch-friendly "this or that" sessions. Keepers emerge naturally from the rankings.
 
@@ -36,31 +36,31 @@ npm run dev
 
 ```bash
 # Using the CLI
-bagfolio serve
+purseinator serve
 
 # Or directly with uvicorn
-uvicorn bagfolio.main:create_app --factory --port 8000
+uvicorn purseinator.main:create_app --factory --port 8000
 ```
 
 The API docs are at http://localhost:8000/docs once the server is running.
 
 ## Configuration
 
-All settings are configured via environment variables with the `BAGFOLIO_` prefix:
+All settings are configured via environment variables with the `PURSEINATOR_` prefix:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `BAGFOLIO_DATABASE_URL` | `sqlite+aiosqlite:///./bagfolio.db` | Database connection string |
-| `BAGFOLIO_PHOTO_STORAGE_ROOT` | `./photos` | Directory for uploaded photos |
-| `BAGFOLIO_SECRET_KEY` | `change-me-in-production` | Secret key for JWT tokens |
-| `BAGFOLIO_MAGIC_LINK_EXPIRY_MINUTES` | `15` | Magic link token lifetime |
-| `BAGFOLIO_SESSION_EXPIRY_DAYS` | `30` | Login session lifetime |
+| `PURSEINATOR_DATABASE_URL` | `sqlite+aiosqlite:///./purseinator.db` | Database connection string |
+| `PURSEINATOR_PHOTO_STORAGE_ROOT` | `./photos` | Directory for uploaded photos |
+| `PURSEINATOR_SECRET_KEY` | `change-me-in-production` | Secret key for JWT tokens |
+| `PURSEINATOR_MAGIC_LINK_EXPIRY_MINUTES` | `15` | Magic link token lifetime |
+| `PURSEINATOR_SESSION_EXPIRY_DAYS` | `30` | Login session lifetime |
 
 For production with PostgreSQL:
 
 ```bash
-export BAGFOLIO_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/bagfolio
-export BAGFOLIO_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+export PURSEINATOR_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/purseinator
+export PURSEINATOR_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 ```
 
 ## Frontend Pages
@@ -78,50 +78,50 @@ The React frontend runs on `http://localhost:5173` during development (proxies A
 
 ## CLI Commands
 
-All CLI commands are available via `bagfolio <command>`.
+All CLI commands are available via `purseinator <command>`.
 
-### `bagfolio serve`
+### `purseinator serve`
 
 Start the API server.
 
 ```bash
-bagfolio serve                          # defaults to 0.0.0.0:8000
-bagfolio serve --host 127.0.0.1 --port 3000
+purseinator serve                          # defaults to 0.0.0.0:8000
+purseinator serve --host 127.0.0.1 --port 3000
 ```
 
-### `bagfolio ingest`
+### `purseinator ingest`
 
 Scan a directory of photos from an SD card dump. Detects neon green delimiter cards (OpenCV HSV thresholding) and groups photos into items.
 
 ```bash
-bagfolio ingest ./sd_card_photos/
-bagfolio ingest ./photos/ --output my_manifest.json
+purseinator ingest ./sd_card_photos/
+purseinator ingest ./photos/ --output my_manifest.json
 ```
 
 Outputs a `manifest.json` file listing the photo groups, ready for `push`.
 
-### `bagfolio push`
+### `purseinator push`
 
 Upload ingested items and photos to the server.
 
 ```bash
-bagfolio push manifest.json \
+purseinator push manifest.json \
   --collection-name "Rachel's Bags" \
   --server-url http://localhost:8000 \
-  --session-id $BAGFOLIO_SESSION_ID
+  --session-id $PURSEINATOR_SESSION_ID
 ```
 
-The `--session-id` can also be set via the `BAGFOLIO_SESSION_ID` environment variable. Get a session ID by calling the `/auth/verify` endpoint.
+The `--session-id` can also be set via the `PURSEINATOR_SESSION_ID` environment variable. Get a session ID by calling the `/auth/verify` endpoint.
 
 ### Typical Operator Workflow
 
 ```bash
 # 1. Ingest photos from SD card
-bagfolio ingest ./sd_card_dump/
+purseinator ingest ./sd_card_dump/
 
 # 2. Push to server
-export BAGFOLIO_SESSION_ID=<your-session-id>
-bagfolio push manifest.json --collection-name "Rachel's Bags"
+export PURSEINATOR_SESSION_ID=<your-session-id>
+purseinator push manifest.json --collection-name "Rachel's Bags"
 
 # 3. Review items in the browser
 open http://localhost:8000/docs   # or use the dashboard at /dashboard
@@ -162,7 +162,7 @@ open http://localhost:8000/docs   # or use the dashboard at /dashboard
 ## Project Structure
 
 ```
-bagfolio/
+purseinator/
   main.py          -- FastAPI app factory
   config.py        -- Settings (env vars)
   models.py        -- SQLAlchemy tables + Pydantic schemas

@@ -1,5 +1,5 @@
 import pytest
-from bagfolio.services.pairing import select_pair, info_level_for_gap
+from purseinator.services.pairing import select_pair, info_level_for_gap
 
 
 def test_select_pair_prefers_similar_ratings():

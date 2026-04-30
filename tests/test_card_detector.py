@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from bagfolio.ingest.card_detector import is_delimiter_card
+from purseinator.ingest.card_detector import is_delimiter_card
 
 
 def test_neon_green_card_detected():

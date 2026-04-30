@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from bagfolio.routes import auth, collections, items, photos, ranking
+from purseinator.routes import auth, collections, items, photos, ranking
 
 
 def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
-    from bagfolio.config import get_settings
-    from bagfolio.database import get_session_factory
+    from purseinator.config import get_settings
+    from purseinator.database import get_session_factory
 
     settings = get_settings()
-    app = FastAPI(title="Bagfolio", version="0.1.0")
+    app = FastAPI(title="Purseinator", version="0.1.0")
 
     app.state.session_factory = session_factory or get_session_factory()
     app.state.photo_storage_root = photo_storage_root or str(settings.photo_storage_root)

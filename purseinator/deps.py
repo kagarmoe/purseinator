@@ -6,7 +6,7 @@ from fastapi import Cookie, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.models import SessionTable, UserTable
+from purseinator.models import SessionTable, UserTable
 
 
 async def get_db(request: Request):

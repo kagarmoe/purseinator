@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from bagfolio.models import (
+from purseinator.models import (
     CollectionCreate,
     ComparisonCreate,
     ItemCreate,

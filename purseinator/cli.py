@@ -5,15 +5,15 @@ from pathlib import Path
 
 import typer
 
-app = typer.Typer(name="bagfolio", help="Bagfolio CLI")
+app = typer.Typer(name="purseinator", help="Purseinator CLI")
 
 
 @app.command()
 def serve(host: str = "0.0.0.0", port: int = 8000):
-    """Start the Bagfolio API server."""
+    """Start the Purseinator API server."""
     import uvicorn
 
-    uvicorn.run("bagfolio.main:create_app", factory=True, host=host, port=port)
+    uvicorn.run("purseinator.main:create_app", factory=True, host=host, port=port)
 
 
 @app.command()
@@ -24,8 +24,8 @@ def ingest(
     """Ingest photos from SD card dump. Splits on neon green card delimiter."""
     import cv2
 
-    from bagfolio.ingest.card_detector import is_delimiter_card
-    from bagfolio.ingest.grouper import group_photos
+    from purseinator.ingest.card_detector import is_delimiter_card
+    from purseinator.ingest.grouper import group_photos
 
     photo_path = Path(photo_dir)
     extensions = {".jpg", ".jpeg", ".png", ".tiff", ".tif"}
@@ -68,15 +68,15 @@ def ingest(
 def push(
     manifest_path: str = typer.Argument(..., help="Path to ingest manifest JSON"),
     collection_name: str = typer.Option(..., help="Name for the collection"),
-    server_url: str = typer.Option("http://localhost:8000", help="Bagfolio server URL"),
-    session_id: str = typer.Option(..., envvar="BAGFOLIO_SESSION_ID", help="Auth session ID"),
+    server_url: str = typer.Option("http://localhost:8000", help="Purseinator server URL"),
+    session_id: str = typer.Option(..., envvar="PURSEINATOR_SESSION_ID", help="Auth session ID"),
 ):
-    """Push ingested photos to the Bagfolio server."""
+    """Push ingested photos to the Purseinator server."""
     import asyncio
 
     import httpx
 
-    from bagfolio.cli_client import push_collection
+    from purseinator.cli_client import push_collection
 
     manifest = json.loads(Path(manifest_path).read_text())
 

@@ -6,8 +6,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bagfolio.main import create_app
-from bagfolio.models import Base
+from purseinator.main import create_app
+from purseinator.models import Base
 
 
 @pytest.fixture

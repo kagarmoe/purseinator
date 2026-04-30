@@ -48,7 +48,7 @@ export default function Home() {
   if (!user) {
     return (
       <div style={{ padding: "2rem", textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
-        <h1 style={{ fontSize: "2rem" }}>Bagfolio</h1>
+        <h1 style={{ fontSize: "2rem" }}>Purseinator</h1>
         <p style={{ color: "#666", marginBottom: "1.5rem" }}>Sign in to start ranking your collection.</p>
         {IS_DEV && (
           <button onClick={handleDevLogin} style={devBtnStyle}>

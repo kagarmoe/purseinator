@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.deps import get_current_user, get_db
-from bagfolio.models import CollectionCreate, CollectionRead, CollectionTable, UserTable
+from purseinator.deps import get_current_user, get_db
+from purseinator.models import CollectionCreate, CollectionRead, CollectionTable, UserTable
 
 router = APIRouter()
 

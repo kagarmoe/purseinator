@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bagfolio.deps import get_current_user, get_db
-from bagfolio.models import ItemRead, ItemTable, UserTable
+from purseinator.deps import get_current_user, get_db
+from purseinator.models import ItemRead, ItemTable, UserTable
 
 router = APIRouter()
 

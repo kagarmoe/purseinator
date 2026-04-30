@@ -6,8 +6,8 @@ from unittest.mock import patch
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bagfolio.main import create_app
-from bagfolio.models import Base
+from purseinator.main import create_app
+from purseinator.models import Base
 
 
 @pytest.mark.asyncio
@@ -16,7 +16,7 @@ async def test_dev_login_works_in_dev_mode(db_client):
     assert resp.status_code == 200
     data = resp.json()
     assert "session_id" in data
-    assert data["email"] == "dev@bagfolio.local"
+    assert data["email"] == "dev@purseinator.local"
 
 
 @pytest.mark.asyncio
@@ -26,7 +26,7 @@ async def test_dev_login_session_is_valid(db_client):
     db_client.cookies.set("session_id", session_id)
     resp = await db_client.get("/auth/me")
     assert resp.status_code == 200
-    assert resp.json()["email"] == "dev@bagfolio.local"
+    assert resp.json()["email"] == "dev@purseinator.local"
 
 
 @pytest.mark.asyncio
@@ -37,7 +37,7 @@ async def test_dev_login_blocked_in_prod():
         await conn.run_sync(Base.metadata.create_all)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    with patch("bagfolio.routes.auth.get_settings") as mock_settings:
+    with patch("purseinator.routes.auth.get_settings") as mock_settings:
         mock_settings.return_value.dev_mode = False
         mock_settings.return_value.secret_key = "test-secret-key-that-is-long"
         mock_settings.return_value.magic_link_expiry_minutes = 15
