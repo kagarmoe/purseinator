@@ -68,7 +68,7 @@ Add `@skip_no_gpu` to `test_ingest_and_push_workflow` only.
 - [ ] **Step 4: Run tests — all should pass or skip, none should error**
 
 ```bash
-cd /path/to/purseinator
+cd /gt/purseinator/purseinator
 python3 -m pytest tests/ -q
 ```
 Expected: 70 passed, 4+ skipped, 0 errors
@@ -81,83 +81,194 @@ git commit -m "test: skip gpu-dependent tests when numpy is absent"
 
 ---
 
-### Task 2: Auth gaps — missing email 422, token reuse 401, /me fields
+### Task 2: Token reuse 401 — add UsedTokenTable and single-use enforcement
+
+**Background:** Magic tokens are stateless JWTs — there is no DB row to "delete". To enforce single-use, we must: add a `jti` (JWT ID) claim to each token, add a `UsedTokenTable` model, add an alembic migration, and check/mark `jti` in the verify endpoint.
 
 **Files:**
+- Modify: `purseinator/auth.py`
+- Modify: `purseinator/models.py`
+- Modify: `purseinator/routes/auth.py`
+- Create: `alembic/versions/<rev>_add_used_tokens_table.py`
 - Modify: `tests/test_auth.py`
-- Modify: `purseinator/routes/auth.py` (if needed)
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write the failing test**
 
 Add to `tests/test_auth.py`:
 ```python
-@pytest.mark.asyncio
-async def test_magic_link_missing_email_returns_422(db_client):
-    resp = await db_client.post("/auth/magic-link", json={})
-    assert resp.status_code == 422
-
-
 @pytest.mark.asyncio
 async def test_verify_token_reuse_returns_401(db_client):
     resp = await db_client.post("/auth/magic-link", json={"email": "rachel@example.com"})
     token = resp.json()["token"]
     # First use — should succeed
-    await db_client.get(f"/auth/verify?token={token}")
-    # Second use — should fail
-    resp = await db_client.get(f"/auth/verify?token={token}")
-    assert resp.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_me_returns_name_and_role(db_client):
-    resp = await db_client.post("/auth/magic-link", json={"email": "rachel@example.com"})
-    token = resp.json()["token"]
-    resp = await db_client.get(f"/auth/verify?token={token}")
-    session_id = resp.json()["session_id"]
-    resp = await db_client.get("/auth/me", cookies={"session_id": session_id})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "name" in data
-    assert "role" in data
+    resp1 = await db_client.get(f"/auth/verify?token={token}")
+    assert resp1.status_code == 200
+    # Second use — must fail
+    resp2 = await db_client.get(f"/auth/verify?token={token}")
+    assert resp2.status_code == 401
 ```
 
-- [ ] **Step 2: Run to confirm failures**
+- [ ] **Step 2: Run to confirm it fails**
+
 ```bash
-python3 -m pytest tests/test_auth.py::test_magic_link_missing_email_returns_422 tests/test_auth.py::test_verify_token_reuse_returns_401 tests/test_auth.py::test_me_returns_name_and_role -v
+python3 -m pytest tests/test_auth.py::test_verify_token_reuse_returns_401 -v
 ```
-Expected: the 422 test may pass (FastAPI Pydantic validation), token reuse and name/role may fail.
+Expected: FAIL — second use returns 200 (token reuse not blocked)
 
-- [ ] **Step 3: Read current auth route**
+- [ ] **Step 3: Add UsedTokenTable to models.py**
 
-Open `purseinator/routes/auth.py`. Find the `/verify` endpoint. Check whether it invalidates the token after use. If not, add invalidation:
+Add after `SessionTable` in `purseinator/models.py`:
 ```python
-# After creating the session, delete or mark the token used:
-await db.delete(token_row)  # or token_row.used = True
-await db.commit()
-```
-Check `/me` endpoint returns `name` and `role` in its response schema.
+class UsedTokenTable(Base):
+    __tablename__ = "used_tokens"
 
-- [ ] **Step 4: Run tests to confirm all pass**
+    id = Column(Integer, primary_key=True)
+    jti = Column(String(255), unique=True, nullable=False, index=True)
+    used_at = Column(DateTime, server_default=func.now())
+```
+
+- [ ] **Step 4: Add alembic migration**
+
+```bash
+cd /gt/purseinator/purseinator
+alembic revision --autogenerate -m "add used_tokens table"
+```
+Verify the generated file in `alembic/versions/` contains `create_table("used_tokens", ...)`.
+
+Run it:
+```bash
+PURSEINATOR_DATABASE_URL="sqlite+aiosqlite:///./dev.db" alembic upgrade head
+```
+
+- [ ] **Step 5: Update auth.py — add jti to token, return (email, jti) from verify**
+
+Replace `purseinator/auth.py` with:
+```python
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timedelta, timezone
+
+import jwt
+
+
+def create_magic_token(email: str, secret: str, expiry_minutes: int = 15) -> str:
+    payload = {
+        "jti": str(uuid.uuid4()),
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes),
+        "type": "magic_link",
+    }
+    return jwt.encode(payload, secret, algorithm="HS256")
+
+
+def verify_magic_token(token: str, secret: str) -> tuple[str, str] | None:
+    """Returns (email, jti) or None if invalid/expired."""
+    try:
+        payload = jwt.decode(token, secret, algorithms=["HS256"])
+        if payload.get("type") != "magic_link":
+            return None
+        email = payload.get("email")
+        jti = payload.get("jti")
+        if not email or not jti:
+            return None
+        return email, jti
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+
+def create_session_id() -> str:
+    return str(uuid.uuid4())
+```
+
+- [ ] **Step 6: Update routes/auth.py — check and mark jti used**
+
+Replace the `verify` endpoint in `purseinator/routes/auth.py`:
+```python
+@router.get("/verify")
+async def verify(token: str, db: AsyncSession = Depends(get_db)):
+    settings = get_settings()
+    result = verify_magic_token(token, settings.secret_key)
+    if result is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    email, jti = result
+
+    # Reject reuse
+    used = await db.execute(
+        select(UsedTokenTable).where(UsedTokenTable.jti == jti)
+    )
+    if used.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=401, detail="Token already used")
+
+    # Find or create user
+    user_result = await db.execute(select(UserTable).where(UserTable.email == email))
+    user = user_result.scalar_one_or_none()
+    if user is None:
+        user = UserTable(email=email, name=email.split("@")[0], role="curator")
+        db.add(user)
+        await db.flush()
+
+    # Mark token used
+    db.add(UsedTokenTable(jti=jti))
+
+    sid = create_session_id()
+    session = SessionTable(
+        session_id=sid,
+        user_id=user.id,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.session_expiry_days),
+    )
+    db.add(session)
+    await db.commit()
+
+    return {"session_id": sid, "email": email}
+```
+
+Also add `UsedTokenTable` to the imports at the top of `routes/auth.py`:
+```python
+from purseinator.models import SessionTable, UsedTokenTable, UserTable
+```
+
+- [ ] **Step 7: Run the token reuse test**
+
+```bash
+python3 -m pytest tests/test_auth.py::test_verify_token_reuse_returns_401 -v
+```
+Expected: PASS
+
+- [ ] **Step 8: Add the 422 coverage test and run full auth suite**
+
+Add to `tests/test_auth.py` (coverage — FastAPI validates this automatically):
+```python
+@pytest.mark.asyncio
+async def test_magic_link_missing_email_returns_422(db_client):
+    resp = await db_client.post("/auth/magic-link", json={})
+    assert resp.status_code == 422
+```
+
+Run full suite:
 ```bash
 python3 -m pytest tests/test_auth.py -v
 ```
 Expected: all pass
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 ```bash
-git add tests/test_auth.py purseinator/routes/auth.py
-git commit -m "test: auth gaps — 422 on missing email, 401 on token reuse, name+role in /me"
+git add purseinator/auth.py purseinator/models.py purseinator/routes/auth.py \
+        alembic/versions/ tests/test_auth.py
+git commit -m "feat: single-use magic tokens via UsedTokenTable jti tracking"
 ```
 
 ---
 
 ### Task 3: Collections — non-owner gets 403
 
+**Background:** `GET /collections/{id}` currently returns 200 for any authenticated user who knows the ID, regardless of ownership. `GET /collections` already scopes by `owner_id` — no fix needed there.
+
 **Files:**
 - Modify: `tests/test_collections.py`
 - Modify: `purseinator/routes/collections.py`
 
-- [ ] **Step 1: Write failing test**
+- [ ] **Step 1: Write the failing test**
 
 Add a second `auth_client` fixture for a different user in `tests/test_collections.py`:
 ```python
@@ -175,36 +286,31 @@ async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
         yield ac
 ```
 
-Add the test:
+Add the import at the top of `tests/test_collections.py` if not already present:
 ```python
 from httpx import ASGITransport, AsyncClient
 from purseinator.main import create_app
+```
 
+Add the test:
+```python
 @pytest.mark.asyncio
 async def test_get_collection_non_owner_returns_403(auth_client, other_auth_client):
     resp = await auth_client.post("/collections", json={"name": "Rachel's Bags"})
     coll_id = resp.json()["id"]
     resp = await other_auth_client.get(f"/collections/{coll_id}")
     assert resp.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_list_collections_scoped_to_user(auth_client, other_auth_client):
-    await auth_client.post("/collections", json={"name": "Rachel's Bags"})
-    resp = await other_auth_client.get("/collections")
-    assert resp.status_code == 200
-    assert len(resp.json()) == 0
 ```
 
-- [ ] **Step 2: Run to confirm failures**
+- [ ] **Step 2: Run to confirm failure**
 ```bash
-python3 -m pytest tests/test_collections.py::test_get_collection_non_owner_returns_403 tests/test_collections.py::test_list_collections_scoped_to_user -v
+python3 -m pytest tests/test_collections.py::test_get_collection_non_owner_returns_403 -v
 ```
-Expected: `test_get_collection_non_owner_returns_403` FAILS (currently returns 200)
+Expected: FAIL — returns 200 instead of 403
 
 - [ ] **Step 3: Fix collections route**
 
-In `purseinator/routes/collections.py`, update `get_collection`:
+In `purseinator/routes/collections.py`, update `get_collection` to add ownership check:
 ```python
 @router.get("/{collection_id}")
 async def get_collection(
@@ -232,24 +338,23 @@ Expected: all pass
 - [ ] **Step 5: Commit**
 ```bash
 git add tests/test_collections.py purseinator/routes/collections.py
-git commit -m "test: collection 403 for non-owner; fix get_collection ownership check"
+git commit -m "feat: collection 403 for non-owner; add ownership check to get_collection"
 ```
 
 ---
 
-### Task 4: Items — wrong collection 404, non-owner 403, missing item 404
+### Task 4: Items — non-owner 403 on patch
+
+**Background:** `GET /{item_id}` already returns 404 if the item doesn't belong to the given collection. `PATCH /{item_id}` (function name: `update_item`) already returns 404 for missing items, but has no ownership check — any authenticated user can patch any item if they know the IDs.
 
 **Files:**
 - Modify: `tests/test_items.py`
 - Modify: `purseinator/routes/items.py`
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write the failing test**
 
-Add to `tests/test_items.py`:
+Add a second user fixture and the ownership test in `tests/test_items.py`:
 ```python
-from httpx import ASGITransport, AsyncClient
-from purseinator.main import create_app
-
 @pytest.fixture
 async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
     app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
@@ -263,121 +368,92 @@ async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
 
 
 @pytest.mark.asyncio
-async def test_get_item_wrong_collection_returns_404(auth_client, collection_id, item_id):
-    other_resp = await auth_client.post("/collections", json={"name": "Other"})
-    other_cid = other_resp.json()["id"]
-    resp = await auth_client.get(f"/collections/{other_cid}/items/{item_id}")
-    assert resp.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_patch_item_missing_returns_404(auth_client, collection_id):
-    resp = await auth_client.patch(
-        f"/collections/{collection_id}/items/99999",
-        json={"brand": "Gucci"},
-    )
-    assert resp.status_code == 404
-
-
-@pytest.mark.asyncio
 async def test_patch_item_non_owner_returns_403(auth_client, other_auth_client, collection_id, item_id):
     resp = await other_auth_client.patch(
         f"/collections/{collection_id}/items/{item_id}",
         json={"brand": "Gucci"},
     )
     assert resp.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_create_item_default_status_is_undecided(auth_client, collection_id):
-    resp = await auth_client.post(f"/collections/{collection_id}/items", json={})
-    assert resp.status_code == 201
-    assert resp.json()["status"] == "undecided"
 ```
 
-- [ ] **Step 2: Run to confirm failures**
-```bash
-python3 -m pytest tests/test_items.py::test_get_item_wrong_collection_returns_404 tests/test_items.py::test_patch_item_missing_returns_404 tests/test_items.py::test_patch_item_non_owner_returns_403 -v
-```
-Expected: all fail
-
-- [ ] **Step 3: Read full items route**
-
-Read `purseinator/routes/items.py` in full to see get_item and patch_item implementations.
-
-- [ ] **Step 4: Fix items route — add ownership and collection-scoping checks**
-
-Update `get_item` to verify item belongs to the given collection:
+Add the imports at the top of `tests/test_items.py` if not already present:
 ```python
-@router.get("/{item_id}")
-async def get_item(
-    collection_id: int,
-    item_id: int,
-    user: UserTable = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> ItemRead:
-    row = await db.get(ItemTable, item_id)
-    if row is None or row.collection_id != collection_id:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return ItemRead.model_validate(row)
+from httpx import ASGITransport, AsyncClient
+from purseinator.main import create_app
 ```
 
-Update `patch_item` to verify ownership via collection:
+- [ ] **Step 2: Run to confirm failure**
+```bash
+python3 -m pytest tests/test_items.py::test_patch_item_non_owner_returns_403 -v
+```
+Expected: FAIL — returns 200 (no ownership check in `update_item`)
+
+- [ ] **Step 3: Fix items route — add ownership check to update_item**
+
+In `purseinator/routes/items.py`, replace the `update_item` function. Add `CollectionTable` to the import line first:
+```python
+from purseinator.models import CollectionTable, ItemRead, ItemTable, UserTable
+```
+
+Then replace `update_item`:
 ```python
 @router.patch("/{item_id}")
-async def patch_item(
+async def update_item(
     collection_id: int,
     item_id: int,
     body: ItemUpdateBody,
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemRead:
-    # Check collection ownership
+    # Ownership check via collection
     coll_result = await db.execute(
         select(CollectionTable).where(CollectionTable.id == collection_id)
     )
     coll = coll_result.scalar_one_or_none()
     if coll is None or coll.owner_id != user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    row = await db.get(ItemTable, item_id)
-    if row is None or row.collection_id != collection_id:
+
+    result = await db.execute(
+        select(ItemTable).where(
+            ItemTable.id == item_id, ItemTable.collection_id == collection_id
+        )
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    if body.brand is not None:
-        row.brand = body.brand
-    if body.description is not None:
-        row.description = body.description
-    if body.condition_score is not None:
-        row.condition_score = body.condition_score
-    if body.status is not None:
-        row.status = body.status
+
+    update_data = body.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(row, key, value)
+
     await db.commit()
     await db.refresh(row)
     return ItemRead.model_validate(row)
 ```
 
-Add `from purseinator.models import CollectionTable` import if not present.
-
-- [ ] **Step 5: Run all item tests**
+- [ ] **Step 4: Run all item tests**
 ```bash
 python3 -m pytest tests/test_items.py -v
 ```
 Expected: all pass
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 ```bash
 git add tests/test_items.py purseinator/routes/items.py
-git commit -m "test: items gaps — wrong collection 404, missing 404, non-owner 403"
+git commit -m "feat: item patch 403 for non-owner; add ownership check to update_item"
 ```
 
 ---
 
-### Task 5: Photos — missing item 404, missing storage key 404
+### Task 5: Photos — missing item 404 on upload
+
+**Background:** `GET /photos/{key}` already returns 404 if the file doesn't exist (lines 75-76 in photos.py). The gap is `POST /photos`: it writes the file to disk even if `item_id` doesn't exist, creating orphan files.
 
 **Files:**
 - Modify: `tests/test_photos.py`
 - Modify: `purseinator/routes/photos.py`
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write the failing test**
 
 Add to `tests/test_photos.py`:
 ```python
@@ -389,51 +465,38 @@ async def test_upload_photo_missing_item_returns_404(auth_client, collection_id)
         files={"file": ("bag.jpg", io.BytesIO(b"data"), "image/jpeg")},
     )
     assert resp.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_serve_missing_photo_returns_404(auth_client):
-    resp = await auth_client.get("/photos/nonexistent-key.jpg")
-    assert resp.status_code == 404
 ```
 
-- [ ] **Step 2: Run to confirm failures**
+- [ ] **Step 2: Run to confirm failure**
 ```bash
-python3 -m pytest tests/test_photos.py::test_upload_photo_missing_item_returns_404 tests/test_photos.py::test_serve_missing_photo_returns_404 -v
+python3 -m pytest tests/test_photos.py::test_upload_photo_missing_item_returns_404 -v
 ```
-Expected: both fail
+Expected: FAIL — returns 201 (no item existence check)
 
-- [ ] **Step 3: Read photos route**
+- [ ] **Step 3: Fix photos route — check item exists before writing**
 
-Open `purseinator/routes/photos.py` and find the upload and serve endpoints.
-
-- [ ] **Step 4: Fix photos route — add 404 checks**
-
-In the upload handler, verify item exists before writing:
+In `purseinator/routes/photos.py`, add `ItemTable` to the import line:
 ```python
-item = await db.get(ItemTable, item_id)
-if item is None or item.collection_id != collection_id:
-    raise HTTPException(status_code=404, detail="Item not found")
+from purseinator.models import ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
 ```
 
-In the serve handler, check file exists before streaming:
+In `upload_photo`, add before `data = await file.read()`:
 ```python
-import os
-full_path = os.path.join(photo_storage_root, storage_key)
-if not os.path.exists(full_path):
-    raise HTTPException(status_code=404, detail="Photo not found")
+    item = await db.get(ItemTable, item_id)
+    if item is None or item.collection_id != collection_id:
+        raise HTTPException(status_code=404, detail="Item not found")
 ```
 
-- [ ] **Step 5: Run all photo tests**
+- [ ] **Step 4: Run all photo tests**
 ```bash
 python3 -m pytest tests/test_photos.py -v
 ```
 Expected: all pass
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 ```bash
 git add tests/test_photos.py purseinator/routes/photos.py
-git commit -m "test: photos gaps — missing item 404 on upload, missing key 404 on serve"
+git commit -m "feat: photo upload 404 when item does not exist"
 ```
 
 ---
@@ -478,11 +541,11 @@ async def test_submit_comparison_invalid_winner_returns_422(auth_client, collect
 ```bash
 python3 -m pytest tests/test_ranking.py::test_next_pair_single_item_returns_404 tests/test_ranking.py::test_submit_comparison_invalid_winner_returns_422 -v
 ```
-Expected: both fail (single item crashes with IndexError; invalid winner returns 201)
+Expected: both fail — single item crashes with IndexError → 500; invalid winner returns 201
 
 - [ ] **Step 3: Fix services/ranking.py — handle single item in get_next_pair**
 
-In `purseinator/services/ranking.py`, update `get_next_pair`:
+In `purseinator/services/ranking.py`, update `get_next_pair` to return `None` when fewer than 2 items:
 ```python
 async def get_next_pair(
     db: AsyncSession, collection_id: int, user_id: int
@@ -517,9 +580,12 @@ async def get_next_pair(
     }
 ```
 
-- [ ] **Step 4: Fix routes/ranking.py — raise 404 on None, validate winner**
+- [ ] **Step 4: Fix routes/ranking.py — raise 404 on None, validate winner via model_validator**
 
+Replace `purseinator/routes/ranking.py` entirely:
 ```python
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -601,7 +667,7 @@ Expected: all pass
 - [ ] **Step 6: Commit**
 ```bash
 git add tests/test_ranking.py purseinator/routes/ranking.py purseinator/services/ranking.py
-git commit -m "test: ranking gaps — single item 404, invalid winner 422"
+git commit -m "feat: ranking single item 404, invalid winner 422"
 ```
 
 ---
@@ -613,21 +679,27 @@ git commit -m "test: ranking gaps — single item 404, invalid winner 422"
 - Modify: `tests/test_pairing.py`
 - Create: `tests/test_ranking_service.py`
 
-- [ ] **Step 1: Write failing tests for elo**
+- [ ] **Step 1: Write failing test for elo upset magnitude**
 
 Add to `tests/test_elo.py`:
 ```python
 def test_larger_upset_produces_larger_rating_change():
     # Big upset: low-rated beats high-rated
-    big_winner_new, big_loser_new = calculate_new_ratings(1200, 1800, k_factor=32)
+    big_winner_new, _ = calculate_new_ratings(1200, 1800, k_factor=32)
     # Small upset: near-equal ratings
-    small_winner_new, small_loser_new = calculate_new_ratings(1490, 1510, k_factor=32)
+    small_winner_new, _ = calculate_new_ratings(1490, 1510, k_factor=32)
     big_change = big_winner_new - 1200
     small_change = small_winner_new - 1490
     assert big_change > small_change
 ```
 
-- [ ] **Step 2: Write failing test for pairing single item**
+- [ ] **Step 2: Run elo test to see if it passes already**
+```bash
+python3 -m pytest tests/test_elo.py::test_larger_upset_produces_larger_rating_change -v
+```
+Expected: PASS (elo math already handles this). If it fails, review `calculate_new_ratings` in `purseinator/services/elo.py`.
+
+- [ ] **Step 3: Write failing test for pairing single item**
 
 Add to `tests/test_pairing.py`:
 ```python
@@ -636,17 +708,24 @@ def test_select_pair_single_item_raises():
         select_pair([(1, 1500, 0)])
 ```
 
-- [ ] **Step 3: Write ranking service unit tests**
+- [ ] **Step 4: Run pairing test**
+```bash
+python3 -m pytest tests/test_pairing.py::test_select_pair_single_item_raises -v
+```
+Expected: PASS (currently raises IndexError on `pool[1][0]`).
+
+- [ ] **Step 5: Write failing ranking service unit tests**
 
 Create `tests/test_ranking_service.py`:
 ```python
 from __future__ import annotations
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from purseinator.models import Base, CollectionTable, EloRatingTable, ItemTable, UserTable
-from purseinator.services.ranking import get_ranked_items, ensure_ratings
+from purseinator.services.ranking import ensure_ratings, get_ranked_items
 
 
 @pytest.fixture
@@ -697,7 +776,6 @@ async def test_ensure_ratings_creates_missing_elo_rows(db_with_user_and_collecti
     await ensure_ratings(db, coll_id, user_id)
     await db.commit()
 
-    from sqlalchemy import select
     result = await db.execute(
         select(EloRatingTable).where(
             EloRatingTable.collection_id == coll_id,
@@ -709,22 +787,19 @@ async def test_ensure_ratings_creates_missing_elo_rows(db_with_user_and_collecti
     assert rows[0].rating == 1500.0
 ```
 
-- [ ] **Step 4: Run to confirm failures**
+- [ ] **Step 6: Run ranking service tests to confirm failures**
 ```bash
-python3 -m pytest tests/test_elo.py::test_larger_upset_produces_larger_rating_change tests/test_pairing.py::test_select_pair_single_item_raises tests/test_ranking_service.py -v
+python3 -m pytest tests/test_ranking_service.py -v
 ```
+Expected: tests fail if `get_ranked_items` or `ensure_ratings` don't behave as expected. If they pass immediately, that's fine — these are behavior-verifying tests.
 
-- [ ] **Step 5: Check if elo test passes already**
-
-The elo math already handles upsets correctly — `test_larger_upset_produces_larger_rating_change` should pass. If it fails, review `expected_score` and `calculate_new_ratings` in `purseinator/services/elo.py`.
-
-- [ ] **Step 6: Run full suite**
+- [ ] **Step 7: Run full suite**
 ```bash
 python3 -m pytest tests/ -q
 ```
 Expected: all non-GPU tests pass
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 ```bash
 git add tests/test_elo.py tests/test_pairing.py tests/test_ranking_service.py
 git commit -m "test: service unit gaps — elo upset magnitude, pairing single item, ranking sort"
