@@ -6,9 +6,11 @@ import CollectionView from "./pages/CollectionView";
 import Dashboard from "./pages/Dashboard";
 import ItemReview from "./pages/ItemReview";
 import Verify from "./pages/Verify";
+import { ToastProvider } from "./components/ToastProvider";
 
 function App() {
   return (
+    <ToastProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -20,6 +22,7 @@ function App() {
         <Route path="/review/:collectionId" element={<ItemReview />} />
       </Routes>
     </BrowserRouter>
+    </ToastProvider>
   );
 }
 
