@@ -521,17 +521,38 @@ async def test_group_rename_failure_on_first_file(auth_client, db_session, photo
         assert (root / photo.storage_key).exists(), f"File missing at staging: {photo.storage_key}"
 
 
-async def test_group_atomic_db_failure_leaves_staging_intact(auth_client, db_session, photo_storage_root, monkeypatch):
+async def test_group_atomic_db_failure_leaves_staging_intact(db_engine, db_session_factory, photo_storage_root, monkeypatch):
     """If DB insert fails, no ItemTable row, all staging rows still present, no files moved."""
-    uid = await _get_user_id(auth_client)
+    from app.main import create_app
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     root = Path(photo_storage_root)
 
-    resp = await auth_client.post("/collections", json={"name": "Atomic Coll", "description": ""})
-    coll_id = resp.json()["id"]
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # Login
+        resp = await ac.post("/auth/magic-link", json={"email": "atomic_test@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
 
-    rows = await _seed_staging_with_files(db_session, uid, photo_storage_root, 2)
-    photo_ids = [r.id for r in rows]
-    staging_keys = [r.storage_key for r in rows]
+        # Create collection
+        resp = await ac.post("/collections", json={"name": "Atomic Coll", "description": ""})
+        coll_id = resp.json()["id"]
+
+    # Get user id
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac2:
+        resp = await ac2.post("/auth/magic-link", json={"email": "atomic_test@example.com"})
+        token = resp.json()["token"]
+        resp = await ac2.get(f"/auth/verify?token={token}")
+        ac2.cookies.set("session_id", resp.json()["session_id"])
+        uid_resp = await ac2.get("/auth/me")
+        uid = uid_resp.json()["id"]
+
+    # Seed staging rows with files
+    async with db_session_factory() as db_session_local:
+        rows = await _seed_staging_with_files(db_session_local, uid, photo_storage_root, 2)
+        photo_ids = [r.id for r in rows]
+        staging_keys = [r.storage_key for r in rows]
 
     # Monkeypatch ItemPhotoTable.__init__ to raise on first call
     orig_init = ItemPhotoTable.__init__
@@ -545,22 +566,25 @@ async def test_group_atomic_db_failure_leaves_staging_intact(auth_client, db_ses
 
     monkeypatch.setattr(ItemPhotoTable, "__init__", bad_init)
 
-    resp = await auth_client.post("/upload/group", json={"collection_id": coll_id, "photo_ids": photo_ids})
-    # Should be an error (500 or similar)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/auth/magic-link", json={"email": "atomic_test@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
+        resp = await ac.post("/upload/group", json={"collection_id": coll_id, "photo_ids": photo_ids})
+
+    # Should be an error (500) or raise caught by raise_app_exceptions=False
     assert resp.status_code in (500, 422, 400), f"Expected error, got {resp.status_code}: {resp.text}"
 
-    # Re-fetch staging rows - they should still be present
-    # Use a new session since the test session might be tainted
-    from sqlalchemy.ext.asyncio import async_sessionmaker
-    async with db_session.bind.connect() as conn:
-        result = await conn.execute(
+    # Reset monkeypatch before DB queries to avoid SQLAlchemy reconstruction issues
+    monkeypatch.setattr(ItemPhotoTable, "__init__", orig_init)
+
+    # Staging rows should still be present
+    async with db_session_factory() as db_session_local:
+        result = await db_session_local.execute(
             select(StagingPhotoTable).where(StagingPhotoTable.id.in_(photo_ids))
         )
-        # Actually use existing session with fresh query
-    result2 = await db_session.execute(
-        select(StagingPhotoTable).where(StagingPhotoTable.id.in_(photo_ids))
-    )
-    remaining = result2.scalars().all()
+        remaining = result.scalars().all()
     assert len(remaining) == 2, f"Expected 2 staging rows, found {len(remaining)}"
 
     # Files should NOT have been moved
@@ -592,16 +616,26 @@ async def test_group_idor_returns_404_when_collection_belongs_to_another_user(au
     assert resp.status_code == 404, resp.text
 
 
-async def test_group_atomic_when_db_insert_fails(auth_client, db_session, photo_storage_root, monkeypatch):
-    """Alias of atomic test - monkeypatch on second ItemPhotoTable.__init__ call."""
-    uid = await _get_user_id(auth_client)
+async def test_group_atomic_when_db_insert_fails(db_engine, db_session_factory, photo_storage_root, monkeypatch):
+    """Monkeypatch on second ItemPhotoTable.__init__ call; staging rows remain intact."""
+    from app.main import create_app
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     root = Path(photo_storage_root)
 
-    resp = await auth_client.post("/collections", json={"name": "Atomic2 Coll", "description": ""})
-    coll_id = resp.json()["id"]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.post("/auth/magic-link", json={"email": "atomic2_test@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
+        uid_resp = await ac.get("/auth/me")
+        uid = uid_resp.json()["id"]
+        resp = await ac.post("/collections", json={"name": "Atomic2 Coll", "description": ""})
+        coll_id = resp.json()["id"]
 
-    rows = await _seed_staging_with_files(db_session, uid, photo_storage_root, 2)
-    photo_ids = [r.id for r in rows]
+    async with db_session_factory() as db_session_local:
+        rows = await _seed_staging_with_files(db_session_local, uid, photo_storage_root, 2)
+        photo_ids = [r.id for r in rows]
 
     orig_init = ItemPhotoTable.__init__
     call_count = {"n": 0}
@@ -614,13 +648,22 @@ async def test_group_atomic_when_db_insert_fails(auth_client, db_session, photo_
 
     monkeypatch.setattr(ItemPhotoTable, "__init__", bad_init_second)
 
-    resp = await auth_client.post("/upload/group", json={"collection_id": coll_id, "photo_ids": photo_ids})
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/auth/magic-link", json={"email": "atomic2_test@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
+        resp = await ac.post("/upload/group", json={"collection_id": coll_id, "photo_ids": photo_ids})
+
     assert resp.status_code in (500, 422, 400), f"Expected error, got {resp.status_code}"
 
-    result = await db_session.execute(
-        select(StagingPhotoTable).where(StagingPhotoTable.id.in_(photo_ids))
-    )
-    remaining = result.scalars().all()
+    monkeypatch.setattr(ItemPhotoTable, "__init__", orig_init)
+
+    async with db_session_factory() as db_session_local:
+        result = await db_session_local.execute(
+            select(StagingPhotoTable).where(StagingPhotoTable.id.in_(photo_ids))
+        )
+        remaining = result.scalars().all()
     assert len(remaining) == 2, f"Expected staging rows intact, got {len(remaining)}"
 
 

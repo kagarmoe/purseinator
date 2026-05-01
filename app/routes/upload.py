@@ -288,37 +288,52 @@ async def group_photos(
 
     await db.commit()
 
-    # Refresh photo rows to get their IDs and current storage_keys
-    for photo in photo_rows:
-        await db.refresh(photo)
+    # Capture photo IDs and staging keys before the session expires objects
+    photo_info = [
+        (photo.id, staging.storage_key, staging.thumbnail_key)
+        for photo, staging in zip(photo_rows, ordered_rows)
+    ]
+    item_id = item.id
 
-    # 4. Post-commit: attempt file renames
+    # 4. Post-commit: attempt file renames (each rename gets its own mini-transaction)
     root = Path(storage_root)
-    for photo, staging in zip(photo_rows, ordered_rows):
-        src = root / staging.storage_key
-        new_dir = root / "collections" / str(body.collection_id) / "items" / str(item.id)
-        new_dir.mkdir(parents=True, exist_ok=True)
-        dst = new_dir / Path(staging.storage_key).name
 
-        # Thumbnail rename too
-        thumb_src = root / staging.thumbnail_key if staging.thumbnail_key else None
-        thumb_dst = new_dir / Path(staging.thumbnail_key).name if staging.thumbnail_key else None
+    for photo_id, staging_key, staging_thumb_key in photo_info:
+        src = root / staging_key
+        new_dir = root / "collections" / str(body.collection_id) / "items" / str(item_id)
+        new_dir.mkdir(parents=True, exist_ok=True)
+        dst = new_dir / Path(staging_key).name
 
         try:
+            # Try renaming the full file
             os.rename(str(src), str(dst))
-            new_key = str(dst.relative_to(root))
-            photo.storage_key = new_key
-
-            if thumb_src and thumb_dst and thumb_src.exists():
-                os.rename(str(thumb_src), str(thumb_dst))
-                photo.thumbnail_key = str(thumb_dst.relative_to(root))
-
-            await db.commit()
         except OSError as e:
-            logger.warning("File rename failed for photo %s: %s; leaving at staging path", photo.id, e)
-            await db.rollback()
+            logger.warning("Full file rename failed for photo %s: %s; leaving at staging path", photo_id, e)
+            continue  # Leave this photo at staging path entirely
 
-    return GroupResponse(item_id=item.id)
+        # Full rename succeeded — update storage_key in DB
+        new_key = str(dst.relative_to(root))
+        new_thumb_key = staging_thumb_key  # default: keep staging thumb key
+
+        # Best-effort thumb rename
+        if staging_thumb_key:
+            thumb_src = root / staging_thumb_key
+            thumb_dst = new_dir / Path(staging_thumb_key).name
+            try:
+                if thumb_src.exists():
+                    os.rename(str(thumb_src), str(thumb_dst))
+                    new_thumb_key = str(thumb_dst.relative_to(root))
+            except OSError as e:
+                logger.warning("Thumb rename failed for photo %s: %s", photo_id, e)
+
+        # Update DB with whatever paths we ended up with
+        result = await db.execute(select(ItemPhotoTable).where(ItemPhotoTable.id == photo_id))
+        photo_row = result.scalar_one()
+        photo_row.storage_key = new_key
+        photo_row.thumbnail_key = new_thumb_key
+        await db.commit()
+
+    return GroupResponse(item_id=item_id)
 
 
 # ---------------------------------------------------------------------------
