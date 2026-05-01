@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { devLogin, getCollections, getMe, requestMagicLink } from "../api";
+import { devLogin, getCollections, getMe, getStaging, requestMagicLink } from "../api";
+import { BannerInbox } from "../components/BannerInbox";
 
 interface Collection {
   id: number;
@@ -17,12 +18,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [stagingCount, setStagingCount] = useState(0);
+  const [stagingHasMore, setStagingHasMore] = useState(false);
 
   useEffect(() => {
-    Promise.all([getMe(), getCollections()])
-      .then(([me, colls]) => {
+    Promise.all([getMe(), getCollections(), getStaging({ limit: 200 }).catch(() => null)])
+      .then(([me, colls, staging]) => {
         setUser(me);
         setCollections(colls);
+        if (staging) {
+          setStagingCount(staging.photos.length);
+          setStagingHasMore(staging.has_more);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -126,6 +133,8 @@ export default function Home() {
       </header>
 
       <main className="px-6 py-8 max-w-lg mx-auto">
+        <BannerInbox count={stagingCount} hasMore={stagingHasMore} />
+
         <h2 className="text-xs uppercase tracking-[0.2em] text-muted font-sans mb-6">
           Your Collections
         </h2>
