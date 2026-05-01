@@ -41,7 +41,7 @@ export default function Home() {
   const handleDevLogin = async () => {
     try {
       const result = await devLogin();
-      document.cookie = `session_id=${result.session_id}; path=/`;
+      document.cookie = `session_id=${result.session_id}; path=/; SameSite=Lax`;
       navigate("/dashboard");
     } catch {
       alert("Dev login failed — is the server running?");

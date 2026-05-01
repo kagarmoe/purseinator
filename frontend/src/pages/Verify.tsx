@@ -15,13 +15,13 @@ export default function Verify() {
     }
     verifyToken(token)
       .then((data) => {
-        document.cookie = `session_id=${data.session_id}; path=/`;
-        navigate("/");
+        document.cookie = `session_id=${data.session_id}; path=/; SameSite=Lax`;
+        navigate("/dashboard");
       })
       .catch(() =>
         setError("Invalid or expired link. Please request a new one.")
       );
-  }, []);
+  }, [navigate, searchParams]);
 
   if (error) {
     return (

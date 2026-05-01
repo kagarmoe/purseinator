@@ -20,7 +20,7 @@ export async function requestMagicLink(email: string) {
 }
 
 export async function verifyToken(token: string) {
-  return apiFetch(`/auth/verify?token=${token}`);
+  return apiFetch(`/auth/verify?token=${encodeURIComponent(token)}`);
 }
 
 export async function devLogin() {
