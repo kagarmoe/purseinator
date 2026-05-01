@@ -44,7 +44,7 @@ async def ensure_ratings(db: AsyncSession, collection_id: int, user_id: int) -> 
 
 async def get_next_pair(
     db: AsyncSession, collection_id: int, user_id: int
-) -> dict:
+) -> dict | None:
     await ensure_ratings(db, collection_id, user_id)
 
     result = await db.execute(
@@ -54,6 +54,10 @@ async def get_next_pair(
         )
     )
     ratings = result.scalars().all()
+
+    if len(ratings) < 2:
+        return None
+
     rating_tuples = [(r.item_id, r.rating, r.comparison_count) for r in ratings]
 
     item_a_id, item_b_id = select_pair(rating_tuples)

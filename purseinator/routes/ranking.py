@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from purseinator.deps import get_current_user, get_db
@@ -17,6 +17,12 @@ class CompareRequest(BaseModel):
     winner_id: int
     info_level_shown: str
 
+    @model_validator(mode="after")
+    def winner_must_be_in_pair(self) -> "CompareRequest":
+        if self.winner_id not in (self.item_a_id, self.item_b_id):
+            raise ValueError("winner_id must be item_a_id or item_b_id")
+        return self
+
 
 @router.get("/next")
 async def next_pair(
@@ -26,6 +32,8 @@ async def next_pair(
 ):
     pair = await get_next_pair(db, collection_id, user.id)
     await db.commit()
+    if pair is None:
+        raise HTTPException(status_code=404, detail="Not enough items to compare")
     return {
         "item_a": pair["item_a"].model_dump(),
         "item_b": pair["item_b"].model_dump(),

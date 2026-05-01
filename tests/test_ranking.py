@@ -81,6 +81,31 @@ async def test_ranked_list_includes_item_data(auth_client, collection_with_items
 
 
 @pytest.mark.asyncio
+async def test_next_pair_single_item_returns_404(auth_client):
+    resp = await auth_client.post("/collections", json={"name": "Solo"})
+    cid = resp.json()["id"]
+    await auth_client.post(f"/collections/{cid}/items", json={"brand": "Coach"})
+    resp = await auth_client.get(f"/collections/{cid}/ranking/next")
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_submit_comparison_invalid_winner_returns_422(auth_client, collection_with_items):
+    cid = collection_with_items
+    pair = (await auth_client.get(f"/collections/{cid}/ranking/next")).json()
+    resp = await auth_client.post(
+        f"/collections/{cid}/ranking/compare",
+        json={
+            "item_a_id": pair["item_a"]["id"],
+            "item_b_id": pair["item_b"]["id"],
+            "winner_id": 99999,
+            "info_level_shown": pair["info_level"],
+        },
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_multiple_comparisons(auth_client, collection_with_items):
     cid = collection_with_items
     for _ in range(5):
