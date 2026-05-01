@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import ComparisonCard from "../components/ComparisonCard";
 import { getNextPair, submitComparison } from "../api";
 
@@ -116,15 +116,32 @@ export default function RankingSession() {
       {/* header bar */}
       <div className="flex items-center justify-between px-6 py-4">
         <span className="font-serif text-lg text-near-black">{formatTime(timeLeft)}</span>
-        <span className="text-xs font-sans bg-cream text-muted px-3 py-1 rounded-full">
-          {count} compared
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            to={`/upload?suggest=${cid}`}
+            className="text-cobalt underline-offset-4 hover:underline text-sm font-sans hidden sm:inline"
+          >
+            + Add photos to this collection
+          </Link>
+          <span className="text-xs font-sans bg-cream text-muted px-3 py-1 rounded-full">
+            {count} compared
+          </span>
+        </div>
         <button
           onClick={() => { clearInterval(timerRef.current); setDone(true); }}
           className="text-xs font-sans uppercase tracking-[0.1em] bg-cobalt text-white px-4 py-1.5 hover:bg-cobalt/80 transition-colors cursor-pointer"
         >
           Done
         </button>
+      </div>
+      {/* Mobile: show discoverability link below header */}
+      <div className="px-6 pb-2 sm:hidden">
+        <Link
+          to={`/upload?suggest=${cid}`}
+          className="text-cobalt underline-offset-4 hover:underline text-sm font-sans"
+        >
+          + Add photos to this collection
+        </Link>
       </div>
 
       {/* main content */}

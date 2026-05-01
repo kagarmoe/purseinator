@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getCollections, getMe } from "../api";
 
 interface Collection {
@@ -33,10 +33,20 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream">
-        <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
-          Operator
-        </p>
-        <h1 className="font-serif text-3xl text-near-black leading-tight">Dashboard</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
+              Operator
+            </p>
+            <h1 className="font-serif text-3xl text-near-black leading-tight">Dashboard</h1>
+          </div>
+          <Link
+            to="/upload"
+            className="shrink-0 bg-terracotta text-white text-xs font-sans uppercase tracking-[0.1em] px-4 py-2 hover:bg-terracotta/80 transition-colors"
+          >
+            Upload
+          </Link>
+        </div>
       </header>
 
       <main className="px-6 py-8 max-w-2xl mx-auto">
