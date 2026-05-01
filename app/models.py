@@ -131,8 +131,10 @@ class ItemPhotoTable(Base):
     id = Column(Integer, primary_key=True)
     item_id = Column(Integer, ForeignKey("items.id"), nullable=False, index=True)
     storage_key = Column(String(500), nullable=False)
+    thumbnail_key = Column(String(500), nullable=True)
     is_hero = Column(Boolean, default=False)
     sort_order = Column(Integer, default=0)
+    captured_at = Column(DateTime, nullable=True)
 
     item = relationship("ItemTable", back_populates="photos")
 
@@ -281,8 +283,10 @@ class ItemPhotoRead(BaseModel):
     id: int
     item_id: int
     storage_key: str
+    thumbnail_key: Optional[str] = None
     is_hero: bool
     sort_order: int
+    captured_at: Optional[datetime] = None
 
 
 class ComparisonCreate(BaseModel):
