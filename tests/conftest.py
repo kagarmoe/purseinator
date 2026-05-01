@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from pathlib import Path
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -71,6 +72,20 @@ async def auth_client(db_engine, db_session_factory, photo_storage_root):
         session_id = resp.json()["session_id"]
         ac.cookies.set("session_id", session_id)
         yield ac
+
+
+@pytest.fixture
+def purse_fixtures():
+    """Returns a callable that resolves a fixture name to its Path."""
+    base = Path(__file__).parent / "fixtures" / "purses"
+
+    def _get(name: str) -> Path:
+        path = base / f"{name}.png"
+        if not path.exists():
+            raise FileNotFoundError(f"purse fixture {name!r} not found at {path}")
+        return path
+
+    return _get
 
 
 @pytest.fixture
