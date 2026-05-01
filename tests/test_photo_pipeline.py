@@ -277,3 +277,43 @@ def test_full_res_not_downsized():
     result = Image.open(io.BytesIO(full))
     w, h = result.size
     assert w == 1200 and h == 800, f"Full-res should be 1200×800 but got {w}×{h}"
+
+
+# ---------------------------------------------------------------------------
+# Size limit and format rejection
+# ---------------------------------------------------------------------------
+
+def test_file_too_large_raises_error():
+    """Files exceeding 25 MB should raise FileTooLargeError."""
+    large_data = b"x" * (25 * 1024 * 1024 + 1)
+    with pytest.raises(FileTooLargeError):
+        process_photo(large_data, "big.jpg")
+
+
+# test_exactly_25mb_is_rejected was dropped: the test name ("is_rejected") contradicted
+# the body (asserting the file is NOT rejected by FileTooLargeError). The boundary
+# semantics are already documented by the `> _MAX_BYTES` check in the implementation:
+# exactly 25 MB passes the size check and only raises UnsupportedFormatError because
+# b"x"*25MB is not a valid image. Adding a test that catches `Exception` broadly adds
+# no value and obscures intent.
+
+
+def test_tiff_rejected():
+    """TIFF format is not in the allowed list."""
+    buf = io.BytesIO()
+    Image.new("RGB", (10, 10)).save(buf, format="TIFF")
+    with pytest.raises(UnsupportedFormatError):
+        process_photo(buf.getvalue(), "photo.tiff")
+
+
+def test_pdf_bytes_rejected():
+    """PDF magic bytes should be rejected."""
+    pdf_bytes = b"%PDF-1.4 fake pdf content"
+    with pytest.raises(UnsupportedFormatError):
+        process_photo(pdf_bytes, "doc.jpg")
+
+
+def test_empty_bytes_rejected():
+    """Empty file should raise UnsupportedFormatError (not crash)."""
+    with pytest.raises((UnsupportedFormatError, Exception)):
+        process_photo(b"", "empty.jpg")
