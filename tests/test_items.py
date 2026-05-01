@@ -114,3 +114,9 @@ async def test_patch_item_non_owner_returns_403(auth_client, other_auth_client, 
 async def test_list_items_non_owner_returns_403(auth_client, other_auth_client, collection_id, item_id):
     resp = await other_auth_client.get(f"/collections/{collection_id}/items")
     assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_item_non_owner_returns_403(auth_client, other_auth_client, collection_id, item_id):
+    resp = await other_auth_client.get(f"/collections/{collection_id}/items/{item_id}")
+    assert resp.status_code == 403

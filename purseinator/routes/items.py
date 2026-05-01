@@ -77,6 +77,7 @@ async def get_item(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemRead:
+    await _require_collection_owner(db, collection_id, user.id)
     result = await db.execute(
         select(ItemTable).where(
             ItemTable.id == item_id, ItemTable.collection_id == collection_id
