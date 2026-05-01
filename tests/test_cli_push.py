@@ -4,8 +4,16 @@ import io
 import json
 
 import pytest
+from PIL import Image
 
 from app.cli_client import push_collection
+
+
+def _jpeg_bytes() -> bytes:
+    """Return minimal valid JPEG bytes."""
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 80), color=(200, 100, 50)).save(buf, format="JPEG")
+    return buf.getvalue()
 
 
 @pytest.fixture
@@ -27,9 +35,9 @@ async def operator_client(db_engine, db_session_factory, photo_storage_root):
 
 @pytest.mark.asyncio
 async def test_push_creates_collection_and_items(operator_client, tmp_path):
-    # Create fake photo files
+    # Create fake photo files (real JPEG bytes required by pipeline)
     for name in ("IMG_002.jpg", "IMG_003.jpg", "IMG_005.jpg"):
-        (tmp_path / name).write_bytes(b"fake-image-data")
+        (tmp_path / name).write_bytes(_jpeg_bytes())
 
     manifest = {
         "source_dir": str(tmp_path),
@@ -48,7 +56,7 @@ async def test_push_creates_collection_and_items(operator_client, tmp_path):
 
 @pytest.mark.asyncio
 async def test_push_items_have_photos(operator_client, tmp_path):
-    (tmp_path / "bag.jpg").write_bytes(b"photo-bytes")
+    (tmp_path / "bag.jpg").write_bytes(_jpeg_bytes())
 
     manifest = {
         "source_dir": str(tmp_path),

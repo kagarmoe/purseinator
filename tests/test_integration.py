@@ -4,6 +4,14 @@ import importlib.util
 import io
 
 import pytest
+from PIL import Image
+
+
+def _jpeg_bytes(color: tuple[int, int, int] = (200, 100, 50)) -> bytes:
+    """Return minimal valid JPEG bytes."""
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 80), color=color).save(buf, format="JPEG")
+    return buf.getvalue()
 
 numpy_available = importlib.util.find_spec("numpy") is not None
 skip_no_gpu = pytest.mark.skipif(
@@ -35,7 +43,7 @@ async def test_full_workflow(auth_client, photo_storage_root):
         # Upload a photo for each
         resp = await auth_client.post(
             f"/collections/{cid}/items/{item_id}/photos",
-            files={"file": (f"{brand}.jpg", io.BytesIO(b"fake-photo"), "image/jpeg")},
+            files={"file": (f"{brand}.jpg", io.BytesIO(_jpeg_bytes()), "image/jpeg")},
         )
         assert resp.status_code == 201
         assert resp.json()["is_hero"] is True
