@@ -469,9 +469,7 @@ These are decisions I made one way; the user might prefer the other. Ordered by 
 
 ---
 
----
-
-## 15. Performance Budget
+## 14. Performance Budget
 
 Explicit numbers so we can make informed trade-offs during implementation:
 
