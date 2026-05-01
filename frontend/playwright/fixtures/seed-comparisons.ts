@@ -17,6 +17,7 @@ export async function seedComparisons(count: number = 5): Promise<void> {
     const pairResp = await fetch(`${BACKEND_URL}/collections/${collectionId}/ranking/next`, { headers });
     if (!pairResp.ok) break;
     const { item_a, item_b } = await pairResp.json();
+    if (!item_a || !item_b) break;
     await fetch(`${BACKEND_URL}/collections/${collectionId}/ranking/compare`, {
       method: 'POST',
       headers,

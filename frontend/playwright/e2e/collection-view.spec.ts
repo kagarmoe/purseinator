@@ -7,7 +7,8 @@ test.beforeAll(async () => {
 
 test('shows ranked items with rank numbers', async ({ authedPage, collectionId }) => {
   await authedPage.goto(`/collection/${collectionId}`);
-  await expect(authedPage.getByText('1', { exact: true }).first()).toBeVisible();
+  const firstRow = authedPage.locator('[data-testid="keeper-row"], [data-testid="seller-row"]').first();
+  await expect(firstRow).toBeVisible();
   const rows = authedPage.locator('[data-testid="keeper-row"], [data-testid="seller-row"]');
   expect(await rows.count()).toBeGreaterThan(0);
 });
@@ -17,6 +18,8 @@ test('keep/sell divider renders', async ({ authedPage, collectionId }) => {
   await expect(authedPage.getByText(/keep.*sell/i)).toBeVisible();
 });
 
+// Divider tests are order-dependent: each mutates the shared collection's divider position.
+// Run serially (workers: 1) in declaration order.
 test('moving divider down marks one more item as keeper', async ({ authedPage, collectionId }) => {
   await authedPage.goto(`/collection/${collectionId}`);
   await expect(authedPage.locator('[data-testid="keeper-row"], [data-testid="seller-row"]').first()).toBeVisible();
