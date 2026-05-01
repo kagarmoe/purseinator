@@ -13,6 +13,16 @@ from purseinator.models import CollectionTable, ItemRead, ItemTable, UserTable
 router = APIRouter()
 
 
+async def _require_collection_owner(db: AsyncSession, collection_id: int, user_id: int) -> CollectionTable:
+    result = await db.execute(
+        select(CollectionTable).where(CollectionTable.id == collection_id)
+    )
+    coll = result.scalar_one_or_none()
+    if coll is None or coll.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return coll
+
+
 class ItemCreateBody(BaseModel):
     brand: str = "unknown"
     description: str = ""
@@ -53,6 +63,7 @@ async def list_items(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[ItemRead]:
+    await _require_collection_owner(db, collection_id, user.id)
     result = await db.execute(
         select(ItemTable).where(ItemTable.collection_id == collection_id)
     )
@@ -85,12 +96,7 @@ async def update_item(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemRead:
-    coll_result = await db.execute(
-        select(CollectionTable).where(CollectionTable.id == collection_id)
-    )
-    coll = coll_result.scalar_one_or_none()
-    if coll is None or coll.owner_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden")
+    await _require_collection_owner(db, collection_id, user.id)
 
     result = await db.execute(
         select(ItemTable).where(
