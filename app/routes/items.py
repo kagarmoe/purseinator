@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -35,6 +35,19 @@ class ItemUpdateBody(BaseModel):
     description: Optional[str] = None
     condition_score: Optional[float] = None
     status: Optional[str] = None
+    primary_color: Optional[Literal[
+        "red", "yellow", "orange", "green", "blue", "violet",
+        "white", "black", "tan", "brown", "multi"
+    ]] = None
+    style: Optional[Literal[
+        "satchel", "saddlebag", "duffel", "frame", "messenger", "tote",
+        "foldover", "barrel", "bucket", "hobo", "baguette", "doctor",
+        "backpack", "clutch", "envelope", "minaudiere", "crossbody",
+        "diaper", "wristlet", "belt-bag"
+    ]] = None
+    material: Optional[Literal[
+        "leather", "vegan leather", "cloth", "tapestry", "velvet", "suede", "performance"
+    ]] = None
 
 
 @router.post("", status_code=201)

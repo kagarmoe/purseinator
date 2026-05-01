@@ -298,7 +298,7 @@ Deprecate the neon-green delimiter card detection in `purseinator ingest` (`app/
 
 2. **Photo pipeline (backend only)** — `pillow-heif` dependency, full pipeline (sniff → HEIC convert → EXIF rotate + strip → captured_at extract → thumbnail). New `/photos/{key}/thumb` endpoint. Apply to existing `POST /collections/{cid}/items/{iid}/photos`. **Test target:** ~8 new backend tests (HEIC conversion, EXIF rotation, captured_at extraction, oversize rejection, format sniffing, thumbnail dimensions).
 
-   Plans 1 and 2 are independent and can run in parallel.
+   Plans 1 and 2 are technically independent at the table level (1 modifies `ItemTable`, 2 modifies `ItemPhotoTable`), but **both add Alembic migrations chaining off the same current head**. Sequencing them avoids a multi-head Alembic state and a merge migration. **Plan 1 lands first**, then plan 2 rebases its migration's `down_revision` to plan 1's revision id. The actual TDD work in plan 2 can be developed in parallel; only the merge timing is sequenced.
 
 3. **Inbox upload + staging + grouping** — `StagingPhotoTable` migration, `/upload/*` endpoints (with all the authorization, pagination, IDOR checks, response shapes from this spec), `/upload` route, tap-to-group UI, group-into-collection modal with inline new-collection creation, discard, 30-sec polling, ARIA + keyboard nav. Atomic group operation per the Atomicity section. Cleanup task (7-day TTL + orphan reaper). **Test target:** ~12 new backend tests, ~4 new Playwright tests.
 

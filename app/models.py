@@ -1,21 +1,70 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import (
     Column,
     DateTime,
     Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     Boolean,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+
+class Color(str, Enum):
+    RED = "red"
+    YELLOW = "yellow"
+    ORANGE = "orange"
+    GREEN = "green"
+    BLUE = "blue"
+    VIOLET = "violet"
+    WHITE = "white"
+    BLACK = "black"
+    TAN = "tan"
+    BROWN = "brown"
+    MULTI = "multi"
+
+
+class Style(str, Enum):
+    SATCHEL = "satchel"
+    SADDLEBAG = "saddlebag"
+    DUFFEL = "duffel"
+    FRAME = "frame"
+    MESSENGER = "messenger"
+    TOTE = "tote"
+    FOLDOVER = "foldover"
+    BARREL = "barrel"
+    BUCKET = "bucket"
+    HOBO = "hobo"
+    BAGUETTE = "baguette"
+    DOCTOR = "doctor"
+    BACKPACK = "backpack"
+    CLUTCH = "clutch"
+    ENVELOPE = "envelope"
+    MINAUDIERE = "minaudiere"
+    CROSSBODY = "crossbody"
+    DIAPER = "diaper"
+    WRISTLET = "wristlet"
+    BELT_BAG = "belt-bag"
+
+
+class Material(str, Enum):
+    LEATHER = "leather"
+    VEGAN_LEATHER = "vegan leather"
+    CLOTH = "cloth"
+    TAPESTRY = "tapestry"
+    VELVET = "velvet"
+    SUEDE = "suede"
+    PERFORMANCE = "performance"
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +111,9 @@ class ItemTable(Base):
     condition_score = Column(Float, nullable=True)
     status = Column(String(20), default="undecided")  # undecided | keeper | seller
     created_at = Column(DateTime, server_default=func.now())
+    primary_color = Column(String(20), nullable=True)
+    style = Column(String(30), nullable=True)
+    material = Column(String(30), nullable=True)
 
     collection = relationship("CollectionTable", back_populates="items")
     photos = relationship("ItemPhotoTable", back_populates="item")
@@ -197,6 +249,9 @@ class ItemRead(BaseModel):
     condition_score: Optional[float] = None
     status: str
     created_at: Optional[datetime] = None
+    primary_color: Optional[Color] = None
+    style: Optional[Style] = None
+    material: Optional[Material] = None
 
 
 class ItemPhotoRead(BaseModel):
