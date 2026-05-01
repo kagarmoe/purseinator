@@ -91,3 +91,39 @@ def test_gif_rejected():
     img.save(buf, format="GIF")
     with pytest.raises(UnsupportedFormatError):
         process_photo(buf.getvalue(), "anim.gif")
+
+
+# ---------------------------------------------------------------------------
+# HEIC → JPEG conversion
+# ---------------------------------------------------------------------------
+
+def _make_heic_bytes() -> bytes:
+    """Generate a tiny valid HEIC file in memory using pillow-heif."""
+    import pillow_heif
+    img = Image.new("RGB", (64, 64), color=(255, 128, 0))
+    heif_file = pillow_heif.from_pillow(img)
+    buf = io.BytesIO()
+    heif_file.save(buf, format="HEIF")
+    return buf.getvalue()
+
+
+def test_heic_converted_to_jpeg():
+    data = _make_heic_bytes()
+    full, thumb, _ = process_photo(data, "photo.heic")
+    # Output must be a valid JPEG (starts with FF D8 FF)
+    assert full[:3] == b"\xff\xd8\xff", "Full output is not a JPEG"
+    assert thumb[:3] == b"\xff\xd8\xff", "Thumb output is not a JPEG"
+
+
+def test_heif_extension_also_accepted():
+    data = _make_heic_bytes()
+    full, thumb, _ = process_photo(data, "photo.heif")
+    assert full[:3] == b"\xff\xd8\xff"
+
+
+def test_heic_output_is_decodable_by_pillow():
+    """Verify the JPEG output can be opened by Pillow without error."""
+    data = _make_heic_bytes()
+    full, _, _ = process_photo(data, "photo.heic")
+    result_img = Image.open(io.BytesIO(full))
+    result_img.verify()  # raises if corrupt
