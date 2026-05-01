@@ -229,3 +229,51 @@ def test_captured_at_none_when_no_exif():
     data = _make_jpeg_bytes()
     _, _, captured_at = process_photo(data, "no_exif.jpg")
     assert captured_at is None
+
+
+# ---------------------------------------------------------------------------
+# Thumbnail dimensions
+# ---------------------------------------------------------------------------
+
+def test_thumbnail_fits_within_600x600():
+    """A 1200×800 image should produce a thumb of exactly 600×400."""
+    buf = io.BytesIO()
+    Image.new("RGB", (1200, 800), color=(10, 20, 30)).save(buf, format="JPEG")
+    _, thumb, _ = process_photo(buf.getvalue(), "large.jpg")
+    result = Image.open(io.BytesIO(thumb))
+    w, h = result.size
+    assert w <= 600 and h <= 600, f"Thumb {w}×{h} exceeds 600×600"
+    assert w == 600, f"Expected width=600, got {w}"
+    assert h == 400, f"Expected height=400, got {h}"
+
+
+def test_thumbnail_preserves_aspect_ratio_portrait():
+    """A 400×800 portrait image should produce a thumb of exactly 300×600."""
+    buf = io.BytesIO()
+    Image.new("RGB", (400, 800), color=(10, 20, 30)).save(buf, format="JPEG")
+    _, thumb, _ = process_photo(buf.getvalue(), "portrait.jpg")
+    result = Image.open(io.BytesIO(thumb))
+    w, h = result.size
+    assert w <= 600 and h <= 600
+    assert h == 600, f"Expected height=600, got {h}"
+    assert w == 300, f"Expected width=300, got {w}"
+
+
+def test_small_image_not_upscaled():
+    """A 100×80 image should produce a thumb of 100×80 (no upscaling)."""
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 80), color=(50, 60, 70)).save(buf, format="JPEG")
+    _, thumb, _ = process_photo(buf.getvalue(), "tiny.jpg")
+    result = Image.open(io.BytesIO(thumb))
+    w, h = result.size
+    assert w == 100 and h == 80, f"Expected 100×80, got {w}×{h}"
+
+
+def test_full_res_not_downsized():
+    """Full-resolution output should preserve the original dimensions."""
+    buf = io.BytesIO()
+    Image.new("RGB", (1200, 800), color=(10, 20, 30)).save(buf, format="JPEG")
+    full, _, _ = process_photo(buf.getvalue(), "large.jpg")
+    result = Image.open(io.BytesIO(full))
+    w, h = result.size
+    assert w == 1200 and h == 800, f"Full-res should be 1200×800 but got {w}×{h}"
