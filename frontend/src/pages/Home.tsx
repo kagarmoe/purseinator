@@ -45,10 +45,10 @@ export default function Home() {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center">
         <div className="space-y-3 w-full max-w-sm px-6">
-          <div className="h-8 bg-cream rounded animate-pulse" />
-          <div className="h-4 bg-cream rounded w-3/4 animate-pulse" />
-          <div className="h-24 bg-cream rounded animate-pulse" />
-          <div className="h-24 bg-cream rounded animate-pulse" />
+          <div className="h-8 bg-dusty-rose/30 rounded animate-pulse" />
+          <div className="h-4 bg-dusty-rose/20 rounded w-3/4 animate-pulse" />
+          <div className="h-24 bg-dusty-rose/30 rounded animate-pulse" />
+          <div className="h-24 bg-dusty-rose/30 rounded animate-pulse" />
         </div>
       </div>
     );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { getItems, updateItemBrand } from "../api";
 
 interface Item {
   id: number;
@@ -8,8 +9,6 @@ interface Item {
   condition_score: number | null;
   status: string;
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || "";
 
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {
@@ -33,18 +32,11 @@ export default function ItemReview() {
   const [editBrand, setEditBrand] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE}/collections/${cid}/items`, { credentials: "include" })
-      .then((r) => r.json())
-      .then(setItems);
+    getItems(cid).then(setItems).catch(() => {});
   }, [cid]);
 
   const saveBrand = async (itemId: number) => {
-    await fetch(`${API_BASE}/collections/${cid}/items/${itemId}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brand: editBrand }),
-    });
+    await updateItemBrand(cid, itemId, editBrand);
     setItems((prev) =>
       prev.map((i) => (i.id === itemId ? { ...i, brand: editBrand } : i))
     );

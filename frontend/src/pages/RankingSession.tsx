@@ -106,7 +106,7 @@ export default function RankingSession() {
   return (
     <div className="min-h-svh bg-cream flex flex-col">
       {/* slim progress bar at top edge */}
-      <div className="h-0.5 bg-cream w-full">
+      <div className="h-0.5 bg-terracotta/20 w-full">
         <div
           className="h-full bg-terracotta transition-all duration-1000 ease-linear"
           style={{ width: `${progressPct}%` }}

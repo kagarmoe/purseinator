@@ -14,10 +14,12 @@ export default function Dashboard() {
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
 
   useEffect(() => {
-    Promise.all([getMe(), getCollections()]).then(([me, colls]) => {
-      setUser(me);
-      setCollections(colls);
-    });
+    Promise.all([getMe(), getCollections()])
+      .then(([me, colls]) => {
+        setUser(me);
+        setCollections(colls);
+      })
+      .catch(() => setUser(null));
   }, []);
 
   if (!user) {

@@ -30,13 +30,12 @@ export default function CollectionView() {
     if (newIndex < 0 || newIndex > items.length) return;
     setDividerIndex(newIndex);
 
-    for (let i = 0; i < items.length; i++) {
+    const snapshot = items;
+    for (let i = 0; i < snapshot.length; i++) {
       const newStatus = i < newIndex ? "keeper" : "seller";
-      if (items[i].status !== newStatus) {
-        try {
-          await updateItemStatus(cid, items[i].id, newStatus);
-        } catch { /* best effort */ }
-      }
+      try {
+        await updateItemStatus(cid, snapshot[i].id, newStatus);
+      } catch { /* best effort */ }
     }
 
     setItems((prev) =>

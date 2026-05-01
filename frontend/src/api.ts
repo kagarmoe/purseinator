@@ -74,3 +74,19 @@ export async function updateItemStatus(
     body: JSON.stringify({ status }),
   });
 }
+
+export async function updateItemBrand(
+  collectionId: number,
+  itemId: number,
+  brand: string
+) {
+  return apiFetch(`/collections/${collectionId}/items/${itemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ brand }),
+  });
+}
+
+export async function getItems(collectionId: number) {
+  return apiFetch(`/collections/${collectionId}/items`);
+}

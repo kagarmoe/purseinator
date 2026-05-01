@@ -4,18 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-gold)]",
+  "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta",
   {
     variants: {
       variant: {
         default:
-          "bg-[var(--color-near-black)] text-[var(--color-white)] hover:bg-[var(--color-near-black)]/90",
+          "bg-near-black text-white hover:bg-near-black/90",
         ghost:
-          "bg-transparent hover:bg-[var(--color-near-black)]/5",
+          "bg-transparent hover:bg-near-black/5",
         outline:
-          "border border-[var(--color-near-black)]/20 bg-transparent hover:border-[var(--color-gold)] hover:text-[var(--color-gold)]",
-        gold:
-          "bg-[var(--color-gold)] text-[var(--color-white)] hover:bg-[var(--color-gold-dark)]",
+          "border border-near-black/20 bg-transparent hover:border-terracotta hover:text-terracotta",
+        terracotta:
+          "bg-terracotta text-white hover:bg-terracotta/80",
+        cobalt:
+          "bg-cobalt text-white hover:bg-cobalt/80",
       },
       size: {
         default: "h-10 px-5 py-2 rounded-sm",

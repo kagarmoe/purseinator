@@ -8,17 +8,17 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-[var(--color-near-black)] text-[var(--color-white)]",
+          "border-transparent bg-near-black text-white",
         secondary:
-          "border-transparent bg-[var(--color-near-black)]/10 text-[var(--color-near-black)]",
+          "border-transparent bg-near-black/10 text-near-black",
         outline:
-          "border-[var(--color-near-black)]/20 text-[var(--color-near-black)]",
+          "border-near-black/20 text-near-black",
         keeper:
-          "border-transparent bg-[var(--color-gold)]/20 text-[var(--color-gold-dark)]",
+          "border-transparent bg-forest text-white",
         seller:
-          "border-transparent bg-[var(--color-near-black)]/5 text-[var(--color-muted)]",
+          "border-transparent bg-terracotta text-white",
         unranked:
-          "border-[var(--color-near-black)]/10 text-[var(--color-muted)]",
+          "border-dusty-rose text-muted bg-transparent",
       },
     },
     defaultVariants: {
