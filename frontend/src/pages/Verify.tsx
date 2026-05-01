@@ -25,7 +25,7 @@ export default function Verify() {
 
   if (error) {
     return (
-      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+      <div className="min-h-screen bg-cream flex items-center justify-center px-6">
         <div className="text-center max-w-xs">
           <p className="text-terracotta text-sm font-sans">{error}</p>
           <button
@@ -40,7 +40,7 @@ export default function Verify() {
   }
 
   return (
-    <div className="min-h-svh bg-cream flex items-center justify-center">
+    <div className="min-h-screen bg-cream flex items-center justify-center">
       <p className="text-muted text-sm font-sans">Signing you in…</p>
     </div>
   );

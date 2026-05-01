@@ -50,7 +50,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-svh bg-cream flex items-center justify-center">
+      <div className="min-h-screen bg-cream flex items-center justify-center">
         <div className="space-y-3 w-full max-w-sm px-6">
           <div className="h-8 bg-dusty-rose/30 rounded animate-pulse" />
           <div className="h-4 bg-dusty-rose/20 rounded w-3/4 animate-pulse" />
@@ -63,7 +63,7 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-xs w-full">
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
             The Collection Edit
@@ -112,7 +112,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-svh bg-cream">
+    <div className="min-h-screen bg-cream">
       <header className="px-6 pt-12 pb-8 border-b border-cream">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-2">
           The Collection Edit

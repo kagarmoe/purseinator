@@ -47,7 +47,7 @@ export default function CollectionView() {
   };
 
   return (
-    <div className="min-h-svh bg-cream">
+    <div className="min-h-screen bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">

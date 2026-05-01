@@ -1,7 +1,9 @@
 import { execSync, spawn } from 'child_process';
 import { writeFileSync, existsSync, unlinkSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = join(__dirname, '../../');
 const TEST_DB_PATH = join(APP_DIR, 'test.db');
 const STATE_FILE = join(__dirname, '.test-state.json');

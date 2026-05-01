@@ -24,14 +24,14 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-svh bg-cream flex items-center justify-center">
+      <div className="min-h-screen bg-cream flex items-center justify-center">
         <p className="text-muted text-sm font-sans">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-svh bg-cream">
+    <div className="min-h-screen bg-cream">
       <header className="px-6 pt-10 pb-6 border-b border-cream">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-1">
           Operator

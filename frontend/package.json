@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test": "LD_LIBRARY_PATH=\"$HOME/.local/lib/playwright-libs:$LD_LIBRARY_PATH\" FONTCONFIG_FILE=\"$HOME/.config/fontconfig/fonts.conf\" playwright test",
+    "test:ui": "LD_LIBRARY_PATH=\"$HOME/.local/lib/playwright-libs:$LD_LIBRARY_PATH\" FONTCONFIG_FILE=\"$HOME/.config/fontconfig/fonts.conf\" playwright test --ui"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

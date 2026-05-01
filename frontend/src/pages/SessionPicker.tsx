@@ -24,7 +24,7 @@ export default function SessionPicker() {
   };
 
   return (
-    <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-3 text-center">
           Session

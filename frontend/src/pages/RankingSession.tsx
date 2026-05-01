@@ -75,7 +75,7 @@ export default function RankingSession() {
 
   if (done) {
     return (
-      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <p className="text-xs uppercase tracking-[0.25em] text-muted font-sans mb-4">
             Session Complete
@@ -104,7 +104,7 @@ export default function RankingSession() {
   }
 
   return (
-    <div className="min-h-svh bg-cream flex flex-col">
+    <div className="min-h-screen bg-cream flex flex-col">
       {/* slim progress bar at top edge */}
       <div className="h-0.5 bg-terracotta/20 w-full">
         <div
