@@ -337,7 +337,7 @@ async def group_photos(
 
 
 # ---------------------------------------------------------------------------
-# DELETE /upload/staging/{staging_id}
+# DELETE /upload/staging/{staging_id}  (B6: ownership-validated discard)
 # ---------------------------------------------------------------------------
 
 @router.delete("/staging/{staging_id}", status_code=204)
