@@ -33,19 +33,19 @@ PURSEINATOR_DATABASE_URL=<neon-url> alembic upgrade head
 
 ## Development Setup
 
+The app code lives in the `purseinator/` subdirectory of the Gas Town workspace. All commands below run from there:
+
 ```bash
-# Create and activate virtual environment
+cd ~/gt/purseinator/purseinator
+```
+
+### Backend
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
-
-# Install the package with dev dependencies
 pip install -e ".[dev]"
-
-# Run database migrations (creates local SQLite DB)
 alembic upgrade head
-
-# Run tests
-python -m pytest tests/ -v
 ```
 
 ### Frontend
@@ -61,12 +61,12 @@ npm run dev
 ### Frontend only (no backend required)
 
 ```bash
-cd frontend
+cd ~/gt/purseinator/purseinator/frontend
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173. The dev login button appears automatically (dev mode) — click it to bypass auth and explore the UI. API calls will fail until the backend is running, but you can inspect all pages and styles.
+Open http://localhost:5173. Click **Dev Login** to bypass auth and explore the UI. API calls fail until the backend is running, but all pages and styles are visible.
 
 ### Full app (frontend + backend)
 
@@ -74,20 +74,18 @@ Run both in separate terminals:
 
 ```bash
 # Terminal 1 — backend
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-alembic upgrade head
+cd ~/gt/purseinator/purseinator
+source .venv/bin/activate
 purseinator serve
 ```
 
 ```bash
 # Terminal 2 — frontend
-cd frontend
-npm install
+cd ~/gt/purseinator/purseinator/frontend
 npm run dev
 ```
 
-Open http://localhost:5173. The frontend proxies all API calls (`/auth`, `/collections`, `/photos`, `/health`) to the backend on port 8000. Click **Dev Login** to create a test session, then use the app end to end.
+Open http://localhost:5173. Click **Dev Login** to create a test session and use the app end to end.
 
 ## Running the Server
 
