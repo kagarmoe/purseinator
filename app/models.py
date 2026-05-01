@@ -98,7 +98,7 @@ class CollectionTable(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     owner = relationship("UserTable", back_populates="collections")
-    items = relationship("ItemTable", back_populates="collection")
+    items = relationship("ItemTable", back_populates="collection", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class ItemTable(Base):
@@ -122,7 +122,7 @@ class ItemTable(Base):
     asking_price = Column(Integer, nullable=True)
 
     collection = relationship("CollectionTable", back_populates="items")
-    photos = relationship("ItemPhotoTable", back_populates="item")
+    photos = relationship("ItemPhotoTable", back_populates="item", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class ItemPhotoTable(Base):
