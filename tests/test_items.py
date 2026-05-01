@@ -267,6 +267,58 @@ async def test_patch_primary_to_multi_auto_clears_secondary(auth_client, collect
 
 
 @pytest.mark.asyncio
+async def test_clearing_secondary_while_primary_is_multi_succeeds(auth_client, collection_id, item_id):
+    """Idempotent clear: PATCH secondary_colors=[] when primary=multi keeps the row valid."""
+    await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi", "secondary_colors": []},
+    )
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"secondary_colors": []},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["primary_color"] == "multi"
+    assert resp.json()["secondary_colors"] == []
+
+
+@pytest.mark.asyncio
+async def test_changing_primary_from_multi_to_color_succeeds(auth_client, collection_id, item_id):
+    """PATCH primary from 'multi' to a regular color succeeds; row stays valid."""
+    await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi", "secondary_colors": []},
+    )
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "brown"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["primary_color"] == "brown"
+    assert resp.json()["secondary_colors"] == []
+
+
+@pytest.mark.asyncio
+async def test_primary_to_multi_clears_existing_secondary_set_in_prior_request(auth_client, collection_id, item_id):
+    """Reverse-order auto-clear: row already has secondary, then PATCH primary→multi must auto-clear."""
+    # First request: set primary=brown with secondary=[tan] (valid)
+    resp1 = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "brown", "secondary_colors": ["tan"]},
+    )
+    assert resp1.status_code == 200
+    assert resp1.json()["secondary_colors"] == ["tan"]
+    # Second request: PATCH primary→multi alone; auto-clear must zero out the persisted secondary
+    resp2 = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi"},
+    )
+    assert resp2.status_code == 200
+    assert resp2.json()["primary_color"] == "multi"
+    assert resp2.json()["secondary_colors"] == []
+
+
+@pytest.mark.asyncio
 async def test_update_item_invalid_secondary_colors_value_returns_422(auth_client, collection_id, item_id):
     """A value not in the color enum (e.g. 'purple') in secondary_colors returns 422."""
     resp = await auth_client.patch(
