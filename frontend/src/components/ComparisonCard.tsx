@@ -38,6 +38,7 @@ function ItemCard({
 
   return (
     <button
+      data-testid="item-card"
       onClick={onTap}
       className={`group flex-1 max-w-56 min-h-52 p-5 text-center cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-lg active:scale-[0.98] border-2 hover:border-terracotta ${
         isFirst

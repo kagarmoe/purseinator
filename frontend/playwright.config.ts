@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './playwright/e2e',
   fullyParallel: false,
-  workers: 1,
+  workers: 1, // tests share a single seeded backend; run serially to avoid session conflicts
   retries: 0,
   use: {
     baseURL: 'http://localhost:5173',

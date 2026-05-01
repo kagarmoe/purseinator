@@ -7,12 +7,14 @@ test('dashboard shows seeded collection by name', async ({ authedPage }) => {
 
 test('View Rankings button navigates to /collection/:id', async ({ authedPage, collectionId }) => {
   await authedPage.goto('/dashboard');
+  await expect(authedPage.getByText('Test Collection')).toBeVisible();
   await authedPage.getByRole('button', { name: /view rankings/i }).first().click();
   await expect(authedPage).toHaveURL(`/collection/${collectionId}`);
 });
 
 test('Review Items button navigates to /review/:id', async ({ authedPage, collectionId }) => {
   await authedPage.goto('/dashboard');
+  await expect(authedPage.getByText('Test Collection')).toBeVisible();
   await authedPage.getByRole('button', { name: /review items/i }).first().click();
   await expect(authedPage).toHaveURL(`/review/${collectionId}`);
 });
@@ -35,5 +37,6 @@ test('empty state shown on home page when user has no collections', async ({ pag
   }]);
 
   await page.goto('/');
+  await expect(page.getByText('PURSEINATOR')).toBeVisible();
   await expect(page.getByText(/no collections yet/i)).toBeVisible();
 });

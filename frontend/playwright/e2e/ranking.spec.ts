@@ -3,7 +3,7 @@ import { test, expect } from '../fixtures/auth';
 test.describe('ranking session', () => {
   test('shows a comparison pair on load', async ({ authedPage, collectionId }) => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
-    const cards = authedPage.locator('button[class*="flex-1"]');
+    const cards = authedPage.locator('[data-testid="item-card"]');
     await expect(cards).toHaveCount(2);
   });
 
@@ -11,7 +11,7 @@ test.describe('ranking session', () => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
     await expect(authedPage.getByText('0 compared')).toBeVisible();
 
-    const cards = authedPage.locator('button[class*="flex-1"]');
+    const cards = authedPage.locator('[data-testid="item-card"]');
     await expect(cards).toHaveCount(2);
     await cards.first().click();
 
@@ -21,18 +21,18 @@ test.describe('ranking session', () => {
   test('a new pair loads after each pick', async ({ authedPage, collectionId }) => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
 
-    const cards = authedPage.locator('button[class*="flex-1"]');
+    const cards = authedPage.locator('[data-testid="item-card"]');
     await expect(cards).toHaveCount(2);
     await cards.first().click();
 
     await expect(authedPage.getByText('1 compared')).toBeVisible();
-    await expect(authedPage.locator('button[class*="flex-1"]')).toHaveCount(2);
+    await expect(authedPage.locator('[data-testid="item-card"]')).toHaveCount(2);
   });
 
   test('Done button shows completion screen with correct count', async ({ authedPage, collectionId }) => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
 
-    const cards = authedPage.locator('button[class*="flex-1"]');
+    const cards = authedPage.locator('[data-testid="item-card"]');
     await expect(cards).toHaveCount(2);
     await cards.first().click();
     await expect(authedPage.getByText('1 compared')).toBeVisible();
