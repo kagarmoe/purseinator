@@ -32,3 +32,8 @@ def test_info_level_condition():
 
 def test_info_level_price():
     assert info_level_for_gap(30) == "price"
+
+
+def test_select_pair_single_item_raises():
+    with pytest.raises((IndexError, ValueError)):
+        select_pair([(1, 1500, 0)])

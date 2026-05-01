@@ -29,3 +29,11 @@ def test_k_factor_decreases_with_comparisons():
     assert k_factor_for_item(comparison_count=0) == 32
     assert k_factor_for_item(comparison_count=10) < 32
     assert k_factor_for_item(comparison_count=30) < k_factor_for_item(comparison_count=10)
+
+
+def test_larger_upset_produces_larger_rating_change():
+    big_winner_new, _ = calculate_new_ratings(1200, 1800, k_factor=32)
+    small_winner_new, _ = calculate_new_ratings(1490, 1510, k_factor=32)
+    big_change = big_winner_new - 1200
+    small_change = small_winner_new - 1490
+    assert big_change > small_change
