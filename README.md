@@ -34,108 +34,106 @@ PURSEINATOR_DATABASE_URL=<neon-url> alembic upgrade head
 
 ## Development Setup
 
-The app code lives in the `purseinator/` subdirectory of the Gas Town workspace. All commands below run from there. If your clone is at a different path, substitute it for `~/gt/purseinator/purseinator` throughout.
+Clone the repo wherever you keep projects, then run the steps below from the repo root. All later commands assume you're in the repo root unless otherwise noted.
+
+```bash
+git clone https://github.com/kagarmoe/purseinator.git
+cd purseinator
+```
 
 ### macOS
 
 Tested on Apple Silicon (arm64) and Intel (x86_64). Uses Homebrew for system deps.
 
 ```bash
-# 1. Install system prerequisites
+# 1. System prerequisites (skip what you already have)
 brew install python@3.13 node@20
 
-# 2. Clone and enter the project
-cd ~/gt/purseinator/purseinator   # or your clone path
-
-# 3. Backend
+# 2. Backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
 
-# 4. Frontend
+# 3. Frontend
 cd frontend
 npm install
 cd ..
 ```
 
-**Apple Silicon note:** native modules (rolldown, esbuild) ship arm64 binaries — `npm install` should pick the right one automatically. If you ever see `Cannot find module './rolldown-binding.darwin-arm64.node'`, run `rm -rf frontend/node_modules && cd frontend && npm install`.
+**Apple Silicon note:** native modules (rolldown, esbuild) ship arm64 binaries — `npm install` should pick the right one automatically. If you see `Cannot find module './rolldown-binding.darwin-arm64.node'`, run `rm -rf frontend/node_modules frontend/package-lock.json && cd frontend && npm install`.
 
 ### Linux
 
 Tested on Debian/Ubuntu and Linux ARM64 (Docker on Apple Silicon). Uses `apt` for system deps; adapt for your distro.
 
 ```bash
-# 1. Install system prerequisites
+# 1. System prerequisites
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip nodejs npm
 
 # Or, for newer Node (recommended): https://github.com/nvm-sh/nvm
 nvm install 20
 
-# 2. Clone and enter the project
-cd ~/gt/purseinator/purseinator
-
-# 3. Backend
+# 2. Backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
 
-# 4. Frontend
+# 3. Frontend
 cd frontend
 npm install
 cd ..
 ```
 
-**Linux ARM64 note (e.g., Docker on Apple Silicon):** if `npm install` finishes but `npm run dev` fails with `Cannot find module './rolldown-binding.linux-arm64-gnu.node'`, the platform-specific binary didn't install. Fix with:
+**Linux ARM64 note (e.g., Docker on Apple Silicon):** if `npm install` finishes but `npm run dev` fails with `Cannot find module './rolldown-binding.linux-arm64-gnu.node'`, the platform-specific binary didn't install. Fix with `rm -rf frontend/node_modules frontend/package-lock.json && cd frontend && npm install`.
+
+## Running Locally
+
+Run backend and frontend in two separate terminals, both started from the repo root.
+
+**Terminal 1 — backend:**
 ```bash
-cd frontend
-rm -rf node_modules package-lock.json
-npm install
-```
-
-## Local Preview
-
-### Frontend only (no backend required)
-
-```bash
-cd ~/gt/purseinator/purseinator/frontend
-npm run dev
-```
-
-Open http://localhost:5173. Click **Dev Login** to bypass auth and explore the UI. API calls fail until the backend is running, but all pages and styles are visible.
-
-### Full app (frontend + backend)
-
-Run both in separate terminals:
-
-```bash
-# Terminal 1 — backend
-cd ~/gt/purseinator/purseinator
 source .venv/bin/activate
 purseinator serve
 ```
+Backend listens on http://localhost:8000. API docs at http://localhost:8000/docs.
+
+**Terminal 2 — frontend:**
+```bash
+cd frontend
+npm run dev
+```
+Frontend listens on http://localhost:5173 and proxies `/auth/*`, `/collections/*`, `/photos/*`, and `/health` to the backend.
+
+Open http://localhost:5173 and click **Dev Login** to create a test session and explore the app end to end.
+
+### Frontend only (no backend)
+
+If you just want to inspect the UI without running the backend:
 
 ```bash
-# Terminal 2 — frontend
-cd ~/gt/purseinator/purseinator/frontend
+cd frontend
 npm run dev
 ```
 
-Open http://localhost:5173. Click **Dev Login** to create a test session and use the app end to end.
+API calls will fail, but pages and styles render. Useful for design work.
 
-## Running the Server
+## Running the Server (alternatives)
+
+The CLI is the easiest way:
 
 ```bash
-# Using the CLI
-purseinator serve
-
-# Or directly with uvicorn
-uvicorn app.main:create_app --factory --port 8000
+purseinator serve                          # defaults to 0.0.0.0:8000
+purseinator serve --host 127.0.0.1 --port 3000
 ```
 
-The API docs are at http://localhost:8000/docs once the server is running.
+Or invoke uvicorn directly:
+
+```bash
+uvicorn app.main:create_app --factory --port 8000
+```
 
 ## Configuration
 
@@ -255,29 +253,30 @@ open http://localhost:8000/docs   # or use the dashboard at /dashboard
 ## Project Structure
 
 ```
-purseinator/
-  main.py          -- FastAPI app factory
-  config.py        -- Settings (env vars)
-  models.py        -- SQLAlchemy tables + Pydantic schemas
-  database.py      -- Async engine and session factory
-  auth.py          -- Magic link token functions
-  deps.py          -- Shared FastAPI dependencies
-  cli.py           -- Typer CLI (serve, ingest, push)
-  cli_client.py    -- Push client (uploads items + photos)
-  telemetry.py     -- OpenTelemetry setup
-  routes/          -- API route handlers
-  services/        -- Business logic (Elo engine, pairing, ranking)
-  ingest/          -- Photo ingestion (card detection, grouping)
-  enrich/          -- Condition estimation (GPU, placeholder)
+app/                 -- Python package (FastAPI app)
+  main.py            -- FastAPI app factory
+  config.py          -- Settings (env vars)
+  models.py          -- SQLAlchemy tables + Pydantic schemas
+  database.py        -- Async engine and session factory
+  auth.py            -- Magic link token functions
+  deps.py            -- Shared FastAPI dependencies
+  cli.py             -- Typer CLI (serve, ingest, push)
+  cli_client.py      -- Push client (uploads items + photos)
+  telemetry.py       -- OpenTelemetry setup
+  routes/            -- API route handlers
+  services/          -- Business logic (Elo engine, pairing, ranking)
+  ingest/            -- Photo ingestion (card detection, grouping)
+  enrich/            -- Condition estimation (GPU, placeholder)
 frontend/
-  src/pages/       -- React pages (Home, SessionPicker, RankingSession, etc.)
-  src/components/  -- Reusable components (ComparisonCard)
-  src/api.ts       -- API client
-alembic/           -- Database migrations
-simulations/       -- Elo convergence simulation
-tests/             -- pytest test suite (85 tests + 17 GPU-skipped)
-frontend/playwright/ -- Playwright E2E tests (29 tests, full-stack, no mocks)
-docs/plans/        -- Design and implementation docs
+  src/pages/         -- React pages (Home, SessionPicker, RankingSession, etc.)
+  src/components/    -- Reusable components (ComparisonCard)
+  src/api.ts         -- API client
+  playwright/        -- Playwright E2E tests (29 tests, full-stack, no mocks)
+api/index.py         -- Vercel serverless entry point
+alembic/             -- Database migrations
+simulations/         -- Elo convergence simulation
+tests/               -- pytest test suite (89 tests + 17 GPU-skipped)
+docs/                -- Design and implementation docs
 ```
 
 ## Testing
