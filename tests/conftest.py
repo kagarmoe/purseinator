@@ -39,6 +39,13 @@ async def db_session_factory(db_engine):
 
 
 @pytest.fixture
+async def db_session(db_session_factory):
+    """Provide a single AsyncSession for direct DB manipulation in tests."""
+    async with db_session_factory() as session:
+        yield session
+
+
+@pytest.fixture
 def photo_storage_root(tmp_path):
     return str(tmp_path / "photos")
 

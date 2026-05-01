@@ -234,3 +234,106 @@ async def test_upload_too_large_returns_413(auth_client, collection_id, item_id)
         files={"file": ("big.jpg", io.BytesIO(large), "image/jpeg")},
     )
     assert resp.status_code == 413
+
+
+# ---------------------------------------------------------------------------
+# GET /photos/{key}/thumb endpoint
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_serve_thumbnail_returns_jpeg(auth_client, collection_id, item_id):
+    """GET /photos/{storage_key}/thumb returns the thumbnail JPEG."""
+    upload_resp = await auth_client.post(
+        f"/collections/{collection_id}/items/{item_id}/photos",
+        files={"file": ("bag.jpg", io.BytesIO(_jpeg_bytes(size=(200, 150))), "image/jpeg")},
+    )
+    storage_key = upload_resp.json()["storage_key"]
+    resp = await auth_client.get(f"/photos/{storage_key}/thumb")
+    assert resp.status_code == 200
+    # Response is a valid JPEG
+    assert resp.content[:3] == b"\xff\xd8\xff", "Thumbnail response is not a JPEG"
+
+
+@pytest.mark.asyncio
+async def test_serve_thumbnail_dimensions_le_600(auth_client, collection_id, item_id):
+    """Thumbnail served by the endpoint is ≤ 600×600."""
+    upload_resp = await auth_client.post(
+        f"/collections/{collection_id}/items/{item_id}/photos",
+        files={"file": ("large.jpg", io.BytesIO(_jpeg_bytes(size=(1200, 900))), "image/jpeg")},
+    )
+    storage_key = upload_resp.json()["storage_key"]
+    resp = await auth_client.get(f"/photos/{storage_key}/thumb")
+    assert resp.status_code == 200
+    thumb_img = Image.open(io.BytesIO(resp.content))
+    w, h = thumb_img.size
+    assert w <= 600 and h <= 600, f"Served thumbnail {w}×{h} exceeds 600×600"
+
+
+@pytest.mark.asyncio
+async def test_serve_thumbnail_404_for_missing_key(auth_client):
+    """GET /photos/nonexistent-key.jpg/thumb → 404."""
+    resp = await auth_client.get("/photos/collections/0/items/0/deadbeef.jpg/thumb")
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_serve_thumbnail_fallback_to_full_res(auth_client, collection_id, item_id, photo_storage_root):
+    """
+    If the thumbnail file is missing (legacy row), the endpoint falls back to
+    serving the full-resolution image rather than 404.
+    """
+    # Upload normally to create a valid row + files
+    upload_resp = await auth_client.post(
+        f"/collections/{collection_id}/items/{item_id}/photos",
+        files={"file": ("bag.jpg", io.BytesIO(_jpeg_bytes(size=(200, 150))), "image/jpeg")},
+    )
+    storage_key = upload_resp.json()["storage_key"]
+    thumbnail_key = upload_resp.json()["thumbnail_key"]
+
+    # Manually delete the thumbnail file to simulate a legacy row
+    from pathlib import Path
+    thumb_path = Path(photo_storage_root) / thumbnail_key
+    thumb_path.unlink()
+
+    # Endpoint should fall back to full-res, not 404
+    resp = await auth_client.get(f"/photos/{storage_key}/thumb")
+    assert resp.status_code == 200
+    assert resp.content[:3] == b"\xff\xd8\xff", "Fallback response is not a JPEG"
+
+
+@pytest.mark.asyncio
+async def test_serve_thumbnail_legacy_row_null_thumbnail_key(
+    auth_client, collection_id, item_id, photo_storage_root, db_session
+):
+    """
+    Legacy rows with thumbnail_key IS NULL fall back to serving the full-res image.
+
+    This exercises the case where a row was created before the thumbnail pipeline
+    was wired in (plan 1 rows), so thumbnail_key is NULL rather than a file that
+    was deleted.
+    """
+    from pathlib import Path
+    from app.models import ItemPhotoTable
+
+    # Create a full-res image file on disk to serve as fallback
+    full_key = f"collections/{collection_id}/items/{item_id}/legacy_row.jpg"
+    full_path = Path(photo_storage_root) / full_key
+    full_path.parent.mkdir(parents=True, exist_ok=True)
+    full_path.write_bytes(_jpeg_bytes())
+
+    # Insert an ItemPhotoTable row directly with thumbnail_key=None
+    row = ItemPhotoTable(
+        item_id=item_id,
+        storage_key=full_key,
+        thumbnail_key=None,  # legacy row — no thumbnail was ever generated
+        is_hero=False,
+        sort_order=99,
+        captured_at=None,
+    )
+    db_session.add(row)
+    await db_session.commit()
+
+    # The thumb endpoint should fall back to the full-res file
+    resp = await auth_client.get(f"/photos/{full_key}/thumb")
+    assert resp.status_code == 200
+    assert resp.content[:3] == b"\xff\xd8\xff", "Fallback full-res response is not a JPEG"
