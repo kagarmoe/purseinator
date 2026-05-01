@@ -69,6 +69,16 @@ async def test_list_photos(auth_client, collection_id, item_id):
 
 
 @pytest.mark.asyncio
+async def test_upload_photo_missing_item_returns_404(auth_client, collection_id):
+    import io
+    resp = await auth_client.post(
+        f"/collections/{collection_id}/items/99999/photos",
+        files={"file": ("bag.jpg", io.BytesIO(b"data"), "image/jpeg")},
+    )
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_serve_photo(auth_client, collection_id, item_id):
     fake_image = io.BytesIO(b"fake-image-data")
     upload_resp = await auth_client.post(

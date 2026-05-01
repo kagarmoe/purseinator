@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from purseinator.deps import get_current_user, get_db
-from purseinator.models import ItemPhotoRead, ItemPhotoTable, UserTable
+from purseinator.models import ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
 
 router = APIRouter()
 
@@ -26,6 +26,10 @@ async def upload_photo(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemPhotoRead:
+    item = await db.get(ItemTable, item_id)
+    if item is None or item.collection_id != collection_id:
+        raise HTTPException(status_code=404, detail="Item not found")
+
     storage_root = _storage_root(request)
     data = await file.read()
 
