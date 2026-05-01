@@ -33,7 +33,7 @@ router = APIRouter()
 
 _MAX_FILES = 50
 _MAX_PER_FILE_BYTES = 25 * 1024 * 1024
-_STAGING_CAP = 500
+_STAGING_CAP = 500  # B8: per-user staging photo cap (429 when exceeded)
 
 
 # ---------------------------------------------------------------------------
