@@ -77,7 +77,7 @@ def _parse_captured_at(img: Image.Image) -> Optional[datetime]:
     """
     try:
         exif = img.getexif()
-    except Exception:
+    except (AttributeError, KeyError, ValueError, OSError):
         return None
 
     raw_dt = exif.get(36867)  # DateTimeOriginal
@@ -101,7 +101,7 @@ def _parse_captured_at(img: Image.Image) -> Optional[datetime]:
             total_minutes = sign * (offset_h * 60 + offset_m)
             tz = timezone(timedelta(minutes=total_minutes))
             aware = naive.replace(tzinfo=tz)
-            return aware.astimezone(timezone.utc).replace(tzinfo=timezone.utc)
+            return aware.astimezone(timezone.utc)
         except (ValueError, IndexError, TypeError):
             pass  # fall through to naive
 

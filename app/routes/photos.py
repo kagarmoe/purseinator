@@ -114,32 +114,32 @@ async def list_photos(
 
 
 @router.get("/photos/{storage_key:path}/thumb")
-async def serve_photo_thumb(storage_key: str, request: Request):
-    # NOTE: FastAPI routes are matched in registration order.
-    # This route MUST be registered BEFORE /photos/{storage_key:path}.
-    # The spike in Task 8 Step 0 confirms that registering the thumb route first
-    # causes FastAPI to correctly strip the literal "/thumb" suffix and pass only
-    # the base key in storage_key. If the spike fails, switch to the prefix form
-    # GET /photos/thumb/{storage_key:path} (see Task 8 Step 0 fallback instructions).
+async def serve_photo_thumb(
+    storage_key: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Serve a 600x600 thumbnail. Falls back to full-res if thumbnail_key is NULL (legacy rows)."""
     storage_root = _storage_root(request)
-    # thumbnail_key is derived by convention: base_key → base_key (already thumb)
-    # The route captures everything before /thumb, so storage_key here is e.g.
-    # "collections/1/items/2/abc123.jpg" and the thumb is "abc123.thumb.jpg".
-    # We store thumbnail_key in the DB, but this endpoint reconstructs it from
-    # the full-res key for clients that compose the URL from storage_key.
-    # Convention: replace .jpg suffix with .thumb.jpg
-    if storage_key.endswith(".jpg"):
-        thumb_key = storage_key[:-4] + ".thumb.jpg"
-    else:
-        thumb_key = storage_key + ".thumb.jpg"
-    path = Path(storage_root) / thumb_key
-    if not path.exists():
-        # Graceful fallback: serve full-res if thumb is missing (legacy rows)
-        full_path = Path(storage_root) / storage_key
-        if full_path.exists():
-            return FileResponse(full_path)
+
+    # Look up the photo row to find its thumbnail_key
+    result = await db.execute(
+        select(ItemPhotoTable).where(ItemPhotoTable.storage_key == storage_key)
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Photo not found")
-    return FileResponse(path)
+
+    # Prefer DB-stored thumbnail_key, fall back to full-res for legacy rows
+    serve_key = row.thumbnail_key or row.storage_key
+    path = Path(storage_root) / serve_key
+    if not path.exists():
+        # Final fallback: try the full-res file
+        path = Path(storage_root) / row.storage_key
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="Photo not found")
+
+    return FileResponse(path, media_type="image/jpeg")
 
 
 @router.get("/photos/{storage_key:path}")
