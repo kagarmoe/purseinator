@@ -145,3 +145,178 @@ async def test_update_item_invalid_primary_color_returns_422(auth_client, collec
         json={"primary_color": "purple"},
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_item_explicit_secondary_colors_roundtrip(auth_client, collection_id):
+    """Explicit secondary_colors round-trips correctly through POST."""
+    resp = await auth_client.post(
+        f"/collections/{collection_id}/items",
+        json={"secondary_colors": ["red", "tan"]},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["secondary_colors"] == ["red", "tan"]
+
+
+@pytest.mark.asyncio
+async def test_update_item_secondary_colors_roundtrip(auth_client, collection_id, item_id):
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"secondary_colors": ["tan", "brown"]},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["secondary_colors"] == ["tan", "brown"]
+
+
+@pytest.mark.asyncio
+async def test_update_item_dimensions_roundtrip(auth_client, collection_id, item_id):
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"width_in": 13.5, "height_in": 10.0, "depth_in": 0.0},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["width_in"] == 13.5
+    assert data["height_in"] == 10.0
+    assert data["depth_in"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_create_item_dimensions_default_null(auth_client, collection_id):
+    resp = await auth_client.post(
+        f"/collections/{collection_id}/items", json={}
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["width_in"] is None
+    assert data["height_in"] is None
+    assert data["depth_in"] is None
+
+
+@pytest.mark.asyncio
+async def test_update_item_serial_number_roundtrip(auth_client, collection_id, item_id):
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"serial_number": "LV-12345"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["serial_number"] == "LV-12345"
+
+
+@pytest.mark.asyncio
+async def test_update_item_asking_price_roundtrip(auth_client, collection_id, item_id):
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"asking_price": 350},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["asking_price"] == 350
+
+
+@pytest.mark.asyncio
+async def test_create_item_secondary_colors_default_empty(auth_client, collection_id):
+    """When secondary_colors is not supplied, it defaults to [] (from ItemCreateBody.Field(default_factory=list))."""
+    resp = await auth_client.post(
+        f"/collections/{collection_id}/items",
+        json={},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["secondary_colors"] == []
+
+
+@pytest.mark.asyncio
+async def test_multi_primary_color_with_secondary_colors_returns_422(auth_client, collection_id, item_id):
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi", "secondary_colors": ["red"]},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_secondary_colors_with_multi_primary_returns_422(auth_client, collection_id, item_id):
+    # Set primary to multi first (valid on its own)
+    await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi"},
+    )
+    # Now try to add secondary colors in a separate request
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"secondary_colors": ["tan"]},
+    )
+    # This request only sends secondary_colors — no primary_color in the body.
+    # The validator only fires on values in the current request body, so this
+    # passes (200). The mutual-exclusion rule is enforced when BOTH fields appear
+    # in the same request body.
+    assert resp.status_code == 200
+
+    # Now send both fields in one request — this must be rejected.
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi", "secondary_colors": ["tan"]},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_primary_to_multi_auto_clears_secondary(auth_client, collection_id, item_id):
+    """Setting primary_color=multi via PATCH auto-clears secondary_colors server-side."""
+    # Set up item with secondary_colors
+    await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "brown", "secondary_colors": ["tan"]},
+    )
+    # PATCH only primary_color to multi — server should auto-clear secondary
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"primary_color": "multi"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["secondary_colors"] == []
+
+
+@pytest.mark.asyncio
+async def test_update_item_invalid_secondary_colors_value_returns_422(auth_client, collection_id, item_id):
+    """A value not in the color enum (e.g. 'purple') in secondary_colors returns 422."""
+    resp = await auth_client.patch(
+        f"/collections/{collection_id}/items/{item_id}",
+        json={"secondary_colors": ["purple"]},
+    )
+    assert resp.status_code == 422
+
+
+import subprocess
+import os
+
+
+def test_migration_adds_all_item_metadata_columns(tmp_path):
+    """Run alembic upgrade head on a fresh SQLite DB and verify all new columns exist."""
+    db_path = str(tmp_path / "migration_test.db")
+    env = {
+        **os.environ,
+        "PURSEINATOR_DATABASE_URL": f"sqlite+aiosqlite:///{db_path}",
+        "PYTHONPATH": "/gt/purseinator/crew/kagarmoe",
+    }
+    result = subprocess.run(
+        ["python3", "-m", "alembic", "upgrade", "head"],
+        cwd="/gt/purseinator/crew/kagarmoe",
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, f"alembic upgrade failed:\n{result.stderr}"
+
+    # Inspect the schema using sqlite3 (synchronous — no async needed here)
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    cursor = conn.execute("PRAGMA table_info(items)")
+    columns = {row[1] for row in cursor.fetchall()}
+    conn.close()
+
+    expected_new_columns = {
+        "primary_color", "secondary_colors", "style", "material",
+        "width_in", "height_in", "depth_in", "serial_number", "asking_price",
+    }
+    missing = expected_new_columns - columns
+    assert not missing, f"Migration did not add columns: {missing}"

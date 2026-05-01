@@ -112,8 +112,14 @@ class ItemTable(Base):
     status = Column(String(20), default="undecided")  # undecided | keeper | seller
     created_at = Column(DateTime, server_default=func.now())
     primary_color = Column(String(20), nullable=True)
+    secondary_colors = Column(JSON, nullable=False, default=list, server_default='[]')
     style = Column(String(30), nullable=True)
     material = Column(String(30), nullable=True)
+    width_in = Column(Float, nullable=True)
+    height_in = Column(Float, nullable=True)
+    depth_in = Column(Float, nullable=True)
+    serial_number = Column(String(255), nullable=True)
+    asking_price = Column(Integer, nullable=True)
 
     collection = relationship("CollectionTable", back_populates="items")
     photos = relationship("ItemPhotoTable", back_populates="item")
@@ -237,6 +243,15 @@ class ItemCreate(BaseModel):
     description: str = ""
     condition_score: Optional[float] = None
     status: Literal["undecided", "keeper", "seller"] = "undecided"
+    primary_color: Optional[str] = None
+    secondary_colors: list[str] = Field(default_factory=list)
+    style: Optional[str] = None
+    material: Optional[str] = None
+    width_in: Optional[float] = None
+    height_in: Optional[float] = None
+    depth_in: Optional[float] = None
+    serial_number: Optional[str] = None
+    asking_price: Optional[int] = None
 
 
 class ItemRead(BaseModel):
@@ -250,8 +265,14 @@ class ItemRead(BaseModel):
     status: str
     created_at: Optional[datetime] = None
     primary_color: Optional[Color] = None
+    secondary_colors: list[str] = Field(default_factory=list)
     style: Optional[Style] = None
     material: Optional[Material] = None
+    width_in: Optional[float] = None
+    height_in: Optional[float] = None
+    depth_in: Optional[float] = None
+    serial_number: Optional[str] = None
+    asking_price: Optional[int] = None
 
 
 class ItemPhotoRead(BaseModel):

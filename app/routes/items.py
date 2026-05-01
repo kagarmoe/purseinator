@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +28,36 @@ class ItemCreateBody(BaseModel):
     description: str = ""
     condition_score: Optional[float] = None
     status: str = "undecided"
+    primary_color: Optional[Literal[
+        "red", "yellow", "orange", "green", "blue", "violet",
+        "white", "black", "tan", "brown", "multi"
+    ]] = None
+    secondary_colors: list[Literal[
+        "red", "yellow", "orange", "green", "blue", "violet",
+        "white", "black", "tan", "brown", "multi"
+    ]] = Field(default_factory=list)
+    style: Optional[Literal[
+        "satchel", "saddlebag", "duffel", "frame", "messenger", "tote",
+        "foldover", "barrel", "bucket", "hobo", "baguette", "doctor",
+        "backpack", "clutch", "envelope", "minaudiere", "crossbody",
+        "diaper", "wristlet", "belt-bag"
+    ]] = None
+    material: Optional[Literal[
+        "leather", "vegan leather", "cloth", "tapestry", "velvet", "suede", "performance"
+    ]] = None
+    width_in: Optional[float] = None
+    height_in: Optional[float] = None
+    depth_in: Optional[float] = None
+    serial_number: Optional[str] = None
+    asking_price: Optional[int] = None
+
+    @model_validator(mode="after")
+    def check_multi_color_exclusion(self) -> "ItemCreateBody":
+        if self.primary_color == "multi" and self.secondary_colors:
+            raise ValueError(
+                "When primary_color is 'multi', secondary_colors must be empty."
+            )
+        return self
 
 
 class ItemUpdateBody(BaseModel):
@@ -39,6 +69,10 @@ class ItemUpdateBody(BaseModel):
         "red", "yellow", "orange", "green", "blue", "violet",
         "white", "black", "tan", "brown", "multi"
     ]] = None
+    secondary_colors: Optional[list[Literal[
+        "red", "yellow", "orange", "green", "blue", "violet",
+        "white", "black", "tan", "brown", "multi"
+    ]]] = None
     style: Optional[Literal[
         "satchel", "saddlebag", "duffel", "frame", "messenger", "tote",
         "foldover", "barrel", "bucket", "hobo", "baguette", "doctor",
@@ -48,6 +82,19 @@ class ItemUpdateBody(BaseModel):
     material: Optional[Literal[
         "leather", "vegan leather", "cloth", "tapestry", "velvet", "suede", "performance"
     ]] = None
+    width_in: Optional[float] = None
+    height_in: Optional[float] = None
+    depth_in: Optional[float] = None
+    serial_number: Optional[str] = None
+    asking_price: Optional[int] = None
+
+    @model_validator(mode="after")
+    def check_multi_color_exclusion(self) -> "ItemUpdateBody":
+        if self.primary_color == "multi" and self.secondary_colors:
+            raise ValueError(
+                "When primary_color is 'multi', secondary_colors must be empty."
+            )
+        return self
 
 
 @router.post("", status_code=201)
@@ -63,6 +110,15 @@ async def create_item(
         description=body.description,
         condition_score=body.condition_score,
         status=body.status,
+        primary_color=body.primary_color,
+        secondary_colors=body.secondary_colors,
+        style=body.style,
+        material=body.material,
+        width_in=body.width_in,
+        height_in=body.height_in,
+        depth_in=body.depth_in,
+        serial_number=body.serial_number,
+        asking_price=body.asking_price,
     )
     db.add(row)
     await db.commit()
@@ -122,6 +178,13 @@ async def update_item(
         raise HTTPException(status_code=404, detail="Item not found")
 
     update_data = body.model_dump(exclude_unset=True)
+
+    # Auto-clear secondary_colors when primary_color is set to "multi",
+    # preserving the mutual-exclusion invariant even when secondary_colors
+    # is not included in this request body.
+    if update_data.get("primary_color") == "multi":
+        update_data["secondary_colors"] = []
+
     for key, value in update_data.items():
         setattr(row, key, value)
 
