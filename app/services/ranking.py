@@ -3,14 +3,14 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from purseinator.models import (
+from app.models import (
     ComparisonTable,
     EloRatingTable,
     ItemRead,
     ItemTable,
 )
-from purseinator.services.elo import calculate_new_ratings, k_factor_for_item
-from purseinator.services.pairing import info_level_for_gap, select_pair
+from app.services.elo import calculate_new_ratings, k_factor_for_item
+from app.services.pairing import info_level_for_gap, select_pair
 
 
 async def ensure_ratings(db: AsyncSession, collection_id: int, user_id: int) -> None:

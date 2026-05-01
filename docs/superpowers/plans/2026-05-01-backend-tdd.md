@@ -225,7 +225,7 @@ async def verify(token: str, db: AsyncSession = Depends(get_db)):
 
 Also add `UsedTokenTable` to the imports at the top of `routes/auth.py`:
 ```python
-from purseinator.models import SessionTable, UsedTokenTable, UserTable
+from app.models import SessionTable, UsedTokenTable, UserTable
 ```
 
 - [ ] **Step 7: Run the token reuse test**
@@ -289,7 +289,7 @@ async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
 Add the import at the top of `tests/test_collections.py` if not already present:
 ```python
 from httpx import ASGITransport, AsyncClient
-from purseinator.main import create_app
+from app.main import create_app
 ```
 
 Add the test:
@@ -379,7 +379,7 @@ async def test_patch_item_non_owner_returns_403(auth_client, other_auth_client, 
 Add the imports at the top of `tests/test_items.py` if not already present:
 ```python
 from httpx import ASGITransport, AsyncClient
-from purseinator.main import create_app
+from app.main import create_app
 ```
 
 - [ ] **Step 2: Run to confirm failure**
@@ -392,7 +392,7 @@ Expected: FAIL — returns 200 (no ownership check in `update_item`)
 
 In `purseinator/routes/items.py`, replace the `update_item` function. Add `CollectionTable` to the import line first:
 ```python
-from purseinator.models import CollectionTable, ItemRead, ItemTable, UserTable
+from app.models import CollectionTable, ItemRead, ItemTable, UserTable
 ```
 
 Then replace `update_item`:
@@ -477,7 +477,7 @@ Expected: FAIL — returns 201 (no item existence check)
 
 In `purseinator/routes/photos.py`, add `ItemTable` to the import line:
 ```python
-from purseinator.models import ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
+from app.models import ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
 ```
 
 In `upload_photo`, add before `data = await file.read()`:
@@ -590,9 +590,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from purseinator.deps import get_current_user, get_db
-from purseinator.models import UserTable
-from purseinator.services.ranking import get_next_pair, get_ranked_items, record_comparison
+from app.deps import get_current_user, get_db
+from app.models import UserTable
+from app.services.ranking import get_next_pair, get_ranked_items, record_comparison
 
 router = APIRouter()
 
@@ -724,8 +724,8 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from purseinator.models import Base, CollectionTable, EloRatingTable, ItemTable, UserTable
-from purseinator.services.ranking import ensure_ratings, get_ranked_items
+from app.models import Base, CollectionTable, EloRatingTable, ItemTable, UserTable
+from app.services.ranking import ensure_ratings, get_ranked_items
 
 
 @pytest.fixture

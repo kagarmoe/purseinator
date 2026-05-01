@@ -12,8 +12,8 @@ import os
 # Add project root to path so we can import purseinator modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from purseinator.services.elo import calculate_new_ratings, k_factor_for_item
-from purseinator.services.pairing import select_pair
+from app.services.elo import calculate_new_ratings, k_factor_for_item
+from app.services.pairing import select_pair
 
 
 def kendall_tau_distance(ranking_a: list, ranking_b: list) -> float:

@@ -14,7 +14,7 @@ skip_no_gpu = pytest.mark.skipif(
 @skip_no_gpu
 def test_estimate_condition_returns_score():
     import numpy as np
-    from purseinator.enrich.condition import estimate_condition
+    from app.enrich.condition import estimate_condition
     fake_image = np.zeros((224, 224, 3), dtype=np.uint8)
     result = estimate_condition(fake_image)
     assert "score" in result
@@ -24,7 +24,7 @@ def test_estimate_condition_returns_score():
 @skip_no_gpu
 def test_estimate_condition_returns_label():
     import numpy as np
-    from purseinator.enrich.condition import estimate_condition
+    from app.enrich.condition import estimate_condition
     fake_image = np.zeros((224, 224, 3), dtype=np.uint8)
     result = estimate_condition(fake_image)
     assert result["label"] in ("excellent", "good", "fair", "poor")
@@ -33,7 +33,7 @@ def test_estimate_condition_returns_label():
 @skip_no_gpu
 def test_estimate_condition_returns_details():
     import numpy as np
-    from purseinator.enrich.condition import estimate_condition
+    from app.enrich.condition import estimate_condition
     fake_image = np.zeros((224, 224, 3), dtype=np.uint8)
     result = estimate_condition(fake_image)
     assert "details" in result
@@ -44,23 +44,23 @@ def test_estimate_condition_returns_details():
 
 @skip_no_gpu
 def test_score_to_label_excellent():
-    from purseinator.enrich.condition import score_to_label
+    from app.enrich.condition import score_to_label
     assert score_to_label(0.90) == "excellent"
 
 
 @skip_no_gpu
 def test_score_to_label_good():
-    from purseinator.enrich.condition import score_to_label
+    from app.enrich.condition import score_to_label
     assert score_to_label(0.70) == "good"
 
 
 @skip_no_gpu
 def test_score_to_label_fair():
-    from purseinator.enrich.condition import score_to_label
+    from app.enrich.condition import score_to_label
     assert score_to_label(0.50) == "fair"
 
 
 @skip_no_gpu
 def test_score_to_label_poor():
-    from purseinator.enrich.condition import score_to_label
+    from app.enrich.condition import score_to_label
     assert score_to_label(0.20) == "poor"

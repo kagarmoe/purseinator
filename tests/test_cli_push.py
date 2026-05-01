@@ -5,14 +5,14 @@ import json
 
 import pytest
 
-from purseinator.cli_client import push_collection
+from app.cli_client import push_collection
 
 
 @pytest.fixture
 async def operator_client(db_engine, db_session_factory, photo_storage_root):
     """Authenticated client with operator role for push tests."""
     from httpx import ASGITransport, AsyncClient
-    from purseinator.main import create_app
+    from app.main import create_app
 
     app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
     transport = ASGITransport(app=app)

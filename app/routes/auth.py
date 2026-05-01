@@ -8,10 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from purseinator.auth import create_magic_token, create_session_id, verify_magic_token
-from purseinator.config import get_settings
-from purseinator.deps import get_current_user, get_db
-from purseinator.models import SessionTable, UsedTokenTable, UserTable
+from app.auth import create_magic_token, create_session_id, verify_magic_token
+from app.config import get_settings
+from app.deps import get_current_user, get_db
+from app.models import SessionTable, UsedTokenTable, UserTable
 
 router = APIRouter()
 

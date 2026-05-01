@@ -13,7 +13,7 @@ def serve(host: str = "0.0.0.0", port: int = 8000):
     """Start the Purseinator API server."""
     import uvicorn
 
-    uvicorn.run("purseinator.main:create_app", factory=True, host=host, port=port)
+    uvicorn.run("app.main:create_app", factory=True, host=host, port=port)
 
 
 @app.command()
@@ -24,8 +24,8 @@ def ingest(
     """Ingest photos from SD card dump. Splits on neon green card delimiter."""
     import cv2
 
-    from purseinator.ingest.card_detector import is_delimiter_card
-    from purseinator.ingest.grouper import group_photos
+    from app.ingest.card_detector import is_delimiter_card
+    from app.ingest.grouper import group_photos
 
     photo_path = Path(photo_dir)
     extensions = {".jpg", ".jpeg", ".png", ".tiff", ".tif"}
@@ -76,7 +76,7 @@ def push(
 
     import httpx
 
-    from purseinator.cli_client import push_collection
+    from app.cli_client import push_collection
 
     manifest = json.loads(Path(manifest_path).read_text())
 

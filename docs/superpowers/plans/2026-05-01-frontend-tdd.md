@@ -550,7 +550,7 @@ export default async function globalSetup() {
 
   const backend = spawn(
     'uvicorn',
-    ['purseinator.main:create_app', '--factory', '--port', '8000', '--log-level', 'warning'],
+    ['app.main:create_app', '--factory', '--port', '8000', '--log-level', 'warning'],
     {
       cwd: APP_DIR,
       env: {

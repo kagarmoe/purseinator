@@ -132,7 +132,7 @@ Open http://localhost:5173. Click **Dev Login** to create a test session and use
 purseinator serve
 
 # Or directly with uvicorn
-uvicorn purseinator.main:create_app --factory --port 8000
+uvicorn app.main:create_app --factory --port 8000
 ```
 
 The API docs are at http://localhost:8000/docs once the server is running.

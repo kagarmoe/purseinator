@@ -127,9 +127,9 @@ async def test_ingest_and_push_workflow(auth_client, tmp_path, photo_storage_roo
     import numpy as np
     import cv2
 
-    from purseinator.ingest.card_detector import is_delimiter_card
-    from purseinator.ingest.grouper import group_photos
-    from purseinator.cli_client import push_collection
+    from app.ingest.card_detector import is_delimiter_card
+    from app.ingest.grouper import group_photos
+    from app.cli_client import push_collection
 
     # Simulate photo files: card, bag, bag, card, bag
     for name, is_green in [

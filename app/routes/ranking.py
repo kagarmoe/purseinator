@@ -5,9 +5,9 @@ from pydantic import BaseModel, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from purseinator.deps import get_current_user, get_db
-from purseinator.models import CollectionTable, UserTable
-from purseinator.services.ranking import get_next_pair, get_ranked_items, record_comparison
+from app.deps import get_current_user, get_db
+from app.models import CollectionTable, UserTable
+from app.services.ranking import get_next_pair, get_ranked_items, record_comparison
 
 router = APIRouter()
 

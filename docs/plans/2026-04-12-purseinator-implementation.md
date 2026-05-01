@@ -58,7 +58,7 @@ dev = ["pytest>=8.1", "pytest-asyncio>=0.23", "httpx>=0.27"]
 gpu = ["torch>=2.2", "opencv-python>=4.9", "pillow>=10.2"]
 
 [project.scripts]
-purseinator = "purseinator.cli:app"
+purseinator = "app.cli:app"
 ```
 
 **Step 2: Create .gitignore**
@@ -105,7 +105,7 @@ app = create_app()
 ```python
 import pytest
 from httpx import ASGITransport, AsyncClient
-from purseinator.main import create_app
+from app.main import create_app
 
 @pytest.fixture
 def app():
@@ -165,7 +165,7 @@ git commit -m "feat: scaffold project — FastAPI backend, React frontend, test 
 ```python
 # tests/test_models.py
 import pytest
-from purseinator.models import UserCreate, ItemCreate, ComparisonCreate
+from app.models import UserCreate, ItemCreate, ComparisonCreate
 
 def test_user_create_valid():
     user = UserCreate(email="rachel@example.com", name="Rachel", role="curator")
@@ -211,7 +211,7 @@ SQLAlchemy table definitions (declarative base):
 
 ```python
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from purseinator.config import get_settings
+from app.config import get_settings
 
 def get_engine():
     return create_async_engine(get_settings().database_url)
@@ -308,7 +308,7 @@ Routes:
 **Step 4: Wire routes into main.py**
 
 ```python
-from purseinator.routes import auth
+from app.routes import auth
 app.include_router(auth.router, prefix="/auth")
 ```
 
@@ -532,7 +532,7 @@ git commit -m "feat: photo upload and serving with filesystem storage"
 
 ```python
 # tests/test_elo.py
-from purseinator.services.elo import calculate_new_ratings, expected_score
+from app.services.elo import calculate_new_ratings, expected_score
 
 def test_expected_score_equal_ratings():
     score = expected_score(1500, 1500)
@@ -555,7 +555,7 @@ def test_calculate_new_ratings_sum_preserved():
     assert winner_new + loser_new == pytest.approx(3000)
 
 def test_k_factor_decreases_with_comparisons():
-    from purseinator.services.elo import k_factor_for_item
+    from app.services.elo import k_factor_for_item
     assert k_factor_for_item(comparison_count=0) == 32
     assert k_factor_for_item(comparison_count=10) < 32
     assert k_factor_for_item(comparison_count=30) < k_factor_for_item(comparison_count=10)
@@ -595,7 +595,7 @@ Expected: PASS
 
 ```python
 # tests/test_pairing.py
-from purseinator.services.pairing import select_pair, info_level_for_gap
+from app.services.pairing import select_pair, info_level_for_gap
 
 def test_select_pair_prefers_similar_ratings():
     ratings = [
@@ -943,7 +943,7 @@ git commit -m "feat: operator dashboard — item review, photo group split/merge
 ```python
 # tests/test_card_detector.py
 import numpy as np
-from purseinator.ingest.card_detector import is_delimiter_card
+from app.ingest.card_detector import is_delimiter_card
 
 def test_neon_green_card_detected():
     # Create a fake image that is mostly neon green
@@ -996,7 +996,7 @@ Expected: PASS
 
 ```python
 # tests/test_grouper.py
-from purseinator.ingest.grouper import group_photos
+from app.ingest.grouper import group_photos
 
 def test_group_by_card():
     # Simulate: card, photo, photo, card, photo
@@ -1100,7 +1100,7 @@ git commit -m "feat: CLI ingest command — neon green card detection and photo 
 ```python
 # tests/test_cli_push.py
 from unittest.mock import AsyncMock
-from purseinator.cli_client import push_collection
+from app.cli_client import push_collection
 
 @pytest.mark.asyncio
 async def test_push_creates_items(mock_api):
@@ -1182,7 +1182,7 @@ git commit -m "feat: CLI push command — batch upload items and photos to serve
 ```python
 # tests/test_condition.py
 import numpy as np
-from purseinator.enrich.condition import estimate_condition
+from app.enrich.condition import estimate_condition
 
 def test_estimate_condition_returns_score():
     fake_image = np.zeros((224, 224, 3), dtype=np.uint8)
@@ -1282,7 +1282,7 @@ git commit -m "feat: CLI enrich command — GPU condition estimation (placeholde
 
 ```python
 # tests/test_telemetry.py
-from purseinator.telemetry import setup_telemetry
+from app.telemetry import setup_telemetry
 
 def test_setup_telemetry_returns_tracer():
     tracer = setup_telemetry(service_name="purseinator-test", export=False)
@@ -1322,7 +1322,7 @@ def instrument_app(app):
 **Step 3: Wire into main.py**
 
 ```python
-from purseinator.telemetry import setup_telemetry, instrument_app
+from app.telemetry import setup_telemetry, instrument_app
 
 def create_app() -> FastAPI:
     app = FastAPI(...)
@@ -1365,8 +1365,8 @@ stay in those buckets across additional comparisons).
 Usage: python simulations/elo_convergence.py --items 200 --sessions 20
 """
 import random
-from purseinator.services.elo import calculate_new_ratings, k_factor_for_item
-from purseinator.services.pairing import select_pair
+from app.services.elo import calculate_new_ratings, k_factor_for_item
+from app.services.pairing import select_pair
 
 def simulate(
     num_items: int,

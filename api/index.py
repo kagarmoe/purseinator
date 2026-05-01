@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from purseinator.main import create_app
+from app.main import create_app
 
 # Mount the purseinator app at /api so Vercel's /api/* routing matches FastAPI's routes
 _inner = create_app()

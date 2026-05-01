@@ -4,7 +4,7 @@ import importlib.util
 
 import pytest
 
-from purseinator.ingest.grouper import group_photos
+from app.ingest.grouper import group_photos
 
 numpy_available = importlib.util.find_spec("numpy") is not None
 skip_no_gpu = pytest.mark.skipif(

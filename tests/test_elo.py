@@ -1,5 +1,5 @@
 import pytest
-from purseinator.services.elo import calculate_new_ratings, expected_score, k_factor_for_item
+from app.services.elo import calculate_new_ratings, expected_score, k_factor_for_item
 
 
 def test_expected_score_equal_ratings():

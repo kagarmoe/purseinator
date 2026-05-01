@@ -87,9 +87,9 @@ async def test_magic_link_missing_email_returns_422(db_client):
 @pytest.mark.asyncio
 async def test_verify_token_reuse_after_db_insert_returns_401(db_client, db_session_factory):
     """Race-safety: even if SELECT race lets two requests through, IntegrityError on insert returns 401."""
-    from purseinator.models import UsedTokenTable
+    from app.models import UsedTokenTable
     import jwt
-    from purseinator.config import get_settings
+    from app.config import get_settings
 
     resp = await db_client.post("/auth/magic-link", json={"email": "race@example.com"})
     token = resp.json()["token"]

@@ -6,8 +6,8 @@ from unittest.mock import patch
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from purseinator.main import create_app
-from purseinator.models import Base
+from app.main import create_app
+from app.models import Base
 
 
 @pytest.mark.asyncio
@@ -37,7 +37,7 @@ async def test_dev_login_blocked_in_prod():
         await conn.run_sync(Base.metadata.create_all)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    with patch("purseinator.routes.auth.get_settings") as mock_settings:
+    with patch("app.routes.auth.get_settings") as mock_settings:
         mock_settings.return_value.dev_mode = False
         mock_settings.return_value.secret_key = "test-secret-key-that-is-long"
         mock_settings.return_value.magic_link_expiry_minutes = 15

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from purseinator.routes import auth, collections, items, photos, ranking
+from app.routes import auth, collections, items, photos, ranking
 
 
 def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
-    from purseinator.config import get_settings
-    from purseinator.database import get_session_factory
+    from app.config import get_settings
+    from app.database import get_session_factory
 
     settings = get_settings()
     app = FastAPI(title="Purseinator", version="0.1.0")

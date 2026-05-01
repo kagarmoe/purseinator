@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from purseinator.telemetry import setup_telemetry
+from app.telemetry import setup_telemetry
 
 
 def test_setup_telemetry_returns_tracer():

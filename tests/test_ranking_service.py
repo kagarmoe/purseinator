@@ -4,8 +4,8 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from purseinator.models import Base, CollectionTable, EloRatingTable, ItemTable, UserTable
-from purseinator.services.ranking import ensure_ratings, get_ranked_items
+from app.models import Base, CollectionTable, EloRatingTable, ItemTable, UserTable
+from app.services.ranking import ensure_ratings, get_ranked_items
 
 
 @pytest.fixture
