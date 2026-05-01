@@ -146,16 +146,14 @@ export function UploadInbox() {
         });
       }
       if (result.failed.length > 0 && result.succeeded.length > 0) {
+        const firstReason = humanizeUploadReason(result.failed[0].reason);
         toast.show(
-          `${result.succeeded.length} photo${result.succeeded.length !== 1 ? 's' : ''} uploaded · ${result.failed.length} skipped`,
+          `${result.succeeded.length} photo${result.succeeded.length !== 1 ? 's' : ''} uploaded · ${result.failed.length} skipped (${firstReason})`,
           'info'
         );
-        // Log humanized reasons to console for debugging
-        result.failed.forEach((f) => {
-          console.info(`Skipped ${f.original_filename}: ${humanizeUploadReason(f.reason)}`);
-        });
       } else if (result.failed.length > 0 && result.succeeded.length === 0) {
-        toast.error("None of those uploaded — see details");
+        const firstReason = humanizeUploadReason(result.failed[0].reason);
+        toast.error(`None of those uploaded — ${firstReason}`);
       }
     } catch (err: unknown) {
       const status = (err as { status?: number }).status;
