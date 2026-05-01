@@ -192,7 +192,7 @@ async def upload_photos(
 
 
 # ---------------------------------------------------------------------------
-# GET /upload/staging
+# GET /upload/staging  (B4: cursor pagination with before= and limit capped at 200)
 # ---------------------------------------------------------------------------
 
 @router.get("/staging", response_model=StagingListResponse)
