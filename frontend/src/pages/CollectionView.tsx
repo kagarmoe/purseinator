@@ -71,6 +71,7 @@ export default function CollectionView() {
             {items.map((item, i) => (
               <div key={item.id}>
                 <div
+                  data-testid={i < (dividerIndex ?? 0) ? 'keeper-row' : 'seller-row'}
                   className={`flex items-center gap-4 py-4 border-l-4 pl-4 mb-0.5 ${
                     i < (dividerIndex ?? 0)
                       ? "border-l-forest bg-forest/5"
