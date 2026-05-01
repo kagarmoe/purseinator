@@ -8,13 +8,23 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from purseinator.deps import get_current_user, get_db
-from purseinator.models import ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
+from purseinator.models import CollectionTable, ItemPhotoRead, ItemPhotoTable, ItemTable, UserTable
 
 router = APIRouter()
 
 
 def _storage_root(request: Request) -> str:
     return request.app.state.photo_storage_root
+
+
+async def _require_collection_owner(db: AsyncSession, collection_id: int, user_id: int) -> CollectionTable:
+    result = await db.execute(
+        select(CollectionTable).where(CollectionTable.id == collection_id)
+    )
+    coll = result.scalar_one_or_none()
+    if coll is None or coll.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return coll
 
 
 @router.post("/collections/{collection_id}/items/{item_id}/photos", status_code=201)
@@ -26,6 +36,7 @@ async def upload_photo(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemPhotoRead:
+    await _require_collection_owner(db, collection_id, user.id)
     item = await db.get(ItemTable, item_id)
     if item is None or item.collection_id != collection_id:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -64,6 +75,7 @@ async def list_photos(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[ItemPhotoRead]:
+    await _require_collection_owner(db, collection_id, user.id)
     result = await db.execute(
         select(ItemPhotoTable)
         .where(ItemPhotoTable.item_id == item_id)

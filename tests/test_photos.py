@@ -3,6 +3,21 @@ from __future__ import annotations
 import io
 
 import pytest
+from httpx import ASGITransport, AsyncClient
+
+from purseinator.main import create_app
+
+
+@pytest.fixture
+async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/auth/magic-link", json={"email": "kimberly@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
+        yield ac
 
 
 @pytest.fixture
@@ -76,6 +91,12 @@ async def test_upload_photo_missing_item_returns_404(auth_client, collection_id)
         files={"file": ("bag.jpg", io.BytesIO(b"data"), "image/jpeg")},
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_photos_non_owner_returns_403(auth_client, other_auth_client, collection_id, item_id):
+    resp = await other_auth_client.get(f"/collections/{collection_id}/items/{item_id}/photos")
+    assert resp.status_code == 403
 
 
 @pytest.mark.asyncio
