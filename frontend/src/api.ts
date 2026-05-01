@@ -125,17 +125,31 @@ export async function patchItemMetadata(
   });
 }
 
-export async function addItemPhotos(
+export async function addItemPhoto(
   collectionId: number,
   itemId: number,
-  files: File[]
+  file: File
 ) {
   const formData = new FormData();
-  files.forEach((f) => formData.append("files", f));
+  formData.append("file", file);
   return apiFetch(`/collections/${collectionId}/items/${itemId}/photos`, {
     method: "POST",
     body: formData,
   });
+}
+
+/** Upload multiple photos to an item (one at a time) */
+export async function addItemPhotos(
+  collectionId: number,
+  itemId: number,
+  files: File[]
+): Promise<unknown[]> {
+  const results = [];
+  for (const file of files) {
+    const result = await addItemPhoto(collectionId, itemId, file);
+    results.push(result);
+  }
+  return results;
 }
 
 // Upload/staging types
