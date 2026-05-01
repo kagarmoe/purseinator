@@ -12,6 +12,7 @@ test.describe('ranking session', () => {
     await expect(authedPage.getByText('0 compared')).toBeVisible();
 
     const cards = authedPage.locator('button[class*="flex-1"]');
+    await expect(cards).toHaveCount(2);
     await cards.first().click();
 
     await expect(authedPage.getByText('1 compared')).toBeVisible();
@@ -21,6 +22,7 @@ test.describe('ranking session', () => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
 
     const cards = authedPage.locator('button[class*="flex-1"]');
+    await expect(cards).toHaveCount(2);
     await cards.first().click();
 
     await expect(authedPage.getByText('1 compared')).toBeVisible();
@@ -31,9 +33,11 @@ test.describe('ranking session', () => {
     await authedPage.goto(`/rank/${collectionId}?minutes=2`);
 
     const cards = authedPage.locator('button[class*="flex-1"]');
+    await expect(cards).toHaveCount(2);
     await cards.first().click();
     await expect(authedPage.getByText('1 compared')).toBeVisible();
 
+    await expect(cards).toHaveCount(2);
     await cards.first().click();
     await expect(authedPage.getByText('2 compared')).toBeVisible();
 
