@@ -25,7 +25,17 @@ async def client(app):
 
 @pytest.fixture
 async def db_engine():
+    from sqlalchemy import event
+
     engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+
+    # Enable SQLite foreign key enforcement (must be done per-connection)
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine

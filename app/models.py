@@ -105,7 +105,7 @@ class ItemTable(Base):
     __tablename__ = "items"
 
     id = Column(Integer, primary_key=True)
-    collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False, index=True)
+    collection_id = Column(Integer, ForeignKey("collections.id", ondelete="CASCADE"), nullable=False, index=True)
     brand = Column(String(255), default="unknown")
     description = Column(Text, default="")
     condition_score = Column(Float, nullable=True)
@@ -129,7 +129,7 @@ class ItemPhotoTable(Base):
     __tablename__ = "item_photos"
 
     id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey("items.id"), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey("items.id", ondelete="CASCADE"), nullable=False, index=True)
     storage_key = Column(String(500), nullable=False)
     thumbnail_key = Column(String(500), nullable=True)
     is_hero = Column(Boolean, default=False)
@@ -137,6 +137,18 @@ class ItemPhotoTable(Base):
     captured_at = Column(DateTime, nullable=True)
 
     item = relationship("ItemTable", back_populates="photos")
+
+
+class StagingPhotoTable(Base):
+    __tablename__ = "staging_photos"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    storage_key = Column(String(500), nullable=False)
+    thumbnail_key = Column(String(500), nullable=True)
+    original_filename = Column(String(500), nullable=True)
+    captured_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
 
 class SessionTable(Base):
