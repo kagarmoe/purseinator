@@ -51,4 +51,6 @@ async def get_collection(
     row = result.scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="Collection not found")
+    if row.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return CollectionRead.model_validate(row)
