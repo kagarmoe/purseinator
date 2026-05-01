@@ -89,6 +89,13 @@ class SessionTable(Base):
     expires_at = Column(DateTime, nullable=False)
 
 
+class UsedTokenTable(Base):
+    __tablename__ = "used_tokens"
+    id = Column(Integer, primary_key=True)
+    jti = Column(String(255), unique=True, nullable=False, index=True)
+    used_at = Column(DateTime, server_default=func.now())
+
+
 class ComparisonTable(Base):
     __tablename__ = "comparisons"
 

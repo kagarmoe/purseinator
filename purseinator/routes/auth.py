@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from purseinator.auth import create_magic_token, create_session_id, verify_magic_token
 from purseinator.config import get_settings
 from purseinator.deps import get_current_user, get_db
-from purseinator.models import SessionTable, UserTable
+from purseinator.models import SessionTable, UsedTokenTable, UserTable
 
 router = APIRouter()
 
@@ -29,16 +29,25 @@ async def request_magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(
 @router.get("/verify")
 async def verify(token: str, db: AsyncSession = Depends(get_db)):
     settings = get_settings()
-    email = verify_magic_token(token, settings.secret_key)
-    if email is None:
+    result = verify_magic_token(token, settings.secret_key)
+    if result is None:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+    email, jti = result
 
-    result = await db.execute(select(UserTable).where(UserTable.email == email))
-    user = result.scalar_one_or_none()
+    used = await db.execute(
+        select(UsedTokenTable).where(UsedTokenTable.jti == jti)
+    )
+    if used.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=401, detail="Token already used")
+
+    user_result = await db.execute(select(UserTable).where(UserTable.email == email))
+    user = user_result.scalar_one_or_none()
     if user is None:
         user = UserTable(email=email, name=email.split("@")[0], role="curator")
         db.add(user)
         await db.flush()
+
+    db.add(UsedTokenTable(jti=jti))
 
     sid = create_session_id()
     session = SessionTable(

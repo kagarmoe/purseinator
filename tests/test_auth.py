@@ -66,3 +66,19 @@ async def test_logout(db_client):
     # Session should be invalid now
     resp = await db_client.get("/auth/me", cookies={"session_id": session_id})
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_verify_token_reuse_returns_401(db_client):
+    resp = await db_client.post("/auth/magic-link", json={"email": "rachel@example.com"})
+    token = resp.json()["token"]
+    resp1 = await db_client.get(f"/auth/verify?token={token}")
+    assert resp1.status_code == 200
+    resp2 = await db_client.get(f"/auth/verify?token={token}")
+    assert resp2.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_magic_link_missing_email_returns_422(db_client):
+    resp = await db_client.post("/auth/magic-link", json={})
+    assert resp.status_code == 422
