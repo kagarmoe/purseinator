@@ -28,32 +28,71 @@ PURSEINATOR_DATABASE_URL=<neon-url> alembic upgrade head
 
 ## Requirements
 
-- Python 3.10+
-- Node.js 18+ (for frontend development)
+- Python 3.10+ (3.13 tested)
+- Node.js 18+ (20.x tested; for frontend development)
+- SQLite (bundled with Python; PostgreSQL optional for production)
 
 ## Development Setup
 
-The app code lives in the `purseinator/` subdirectory of the Gas Town workspace. All commands below run from there:
+The app code lives in the `purseinator/` subdirectory of the Gas Town workspace. All commands below run from there. If your clone is at a different path, substitute it for `~/gt/purseinator/purseinator` throughout.
+
+### macOS
+
+Tested on Apple Silicon (arm64) and Intel (x86_64). Uses Homebrew for system deps.
 
 ```bash
-cd ~/gt/purseinator/purseinator
-```
+# 1. Install system prerequisites
+brew install python@3.13 node@20
 
-### Backend
+# 2. Clone and enter the project
+cd ~/gt/purseinator/purseinator   # or your clone path
 
-```bash
-python -m venv .venv
+# 3. Backend
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
-```
 
-### Frontend
-
-```bash
+# 4. Frontend
 cd frontend
 npm install
-npm run dev
+cd ..
+```
+
+**Apple Silicon note:** native modules (rolldown, esbuild) ship arm64 binaries — `npm install` should pick the right one automatically. If you ever see `Cannot find module './rolldown-binding.darwin-arm64.node'`, run `rm -rf frontend/node_modules && cd frontend && npm install`.
+
+### Linux
+
+Tested on Debian/Ubuntu and Linux ARM64 (Docker on Apple Silicon). Uses `apt` for system deps; adapt for your distro.
+
+```bash
+# 1. Install system prerequisites
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip nodejs npm
+
+# Or, for newer Node (recommended): https://github.com/nvm-sh/nvm
+nvm install 20
+
+# 2. Clone and enter the project
+cd ~/gt/purseinator/purseinator
+
+# 3. Backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+
+# 4. Frontend
+cd frontend
+npm install
+cd ..
+```
+
+**Linux ARM64 note (e.g., Docker on Apple Silicon):** if `npm install` finishes but `npm run dev` fails with `Cannot find module './rolldown-binding.linux-arm64-gnu.node'`, the platform-specific binary didn't install. Fix with:
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ## Local Preview
@@ -62,7 +101,6 @@ npm run dev
 
 ```bash
 cd ~/gt/purseinator/purseinator/frontend
-npm install
 npm run dev
 ```
 
@@ -237,11 +275,14 @@ frontend/
   src/api.ts       -- API client
 alembic/           -- Database migrations
 simulations/       -- Elo convergence simulation
-tests/             -- pytest test suite (83 tests)
+tests/             -- pytest test suite (85 tests + 17 GPU-skipped)
+frontend/playwright/ -- Playwright E2E tests (29 tests, full-stack, no mocks)
 docs/plans/        -- Design and implementation docs
 ```
 
 ## Testing
+
+### Backend (pytest)
 
 ```bash
 # Run all tests
@@ -254,7 +295,19 @@ python -m pytest tests/test_auth.py -v
 python -m pytest tests/test_integration.py -v
 ```
 
-Tests use an in-memory SQLite database and temporary directories for photo storage. No external services needed.
+Tests use an in-memory SQLite database and temporary directories for photo storage. No external services needed. 17 tests skip when numpy isn't installed (GPU/condition-detection features); install with `pip install -e ".[gpu]"` to run them.
+
+### Frontend (Playwright E2E)
+
+End-to-end tests run a real backend (FastAPI on port 8000), a real Vite dev server (port 5173), and a real SQLite test DB. No mocking. Tests cover auth, collection management, ranking sessions, timer expiry, collection view, and item review.
+
+```bash
+cd frontend
+npm test           # runs all 29 E2E tests headless
+npm run test:ui    # opens the Playwright UI for debugging
+```
+
+The test runner is fully self-contained: it starts the backend, seeds 10 items, runs the suite, and tears everything down.
 
 ## Elo Convergence Simulation
 
