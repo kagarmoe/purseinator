@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { devLogin, getCollections, getMe } from "../api";
+import { devLogin, getCollections, getMe, requestMagicLink } from "../api";
 
 interface Collection {
   id: number;
@@ -15,8 +15,10 @@ export default function Home() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  const loadData = () => {
+  useEffect(() => {
     Promise.all([getMe(), getCollections()])
       .then(([me, colls]) => {
         setUser(me);
@@ -24,18 +26,23 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await requestMagicLink(email);
+      setMagicLinkSent(true);
+    } catch {
+      alert("Could not send magic link — is the server running?");
+    }
+  };
 
   const handleDevLogin = async () => {
     try {
       const result = await devLogin();
       document.cookie = `session_id=${result.session_id}; path=/`;
-      setLoading(true);
-      loadData();
+      navigate("/dashboard");
     } catch {
       alert("Dev login failed — is the server running?");
     }
@@ -67,10 +74,34 @@ export default function Home() {
           <p className="text-muted text-sm mb-10 font-sans">
             Sign in to start curating your collection.
           </p>
+
+          {magicLinkSent ? (
+            <p className="text-muted text-sm font-sans">
+              Check your email for a sign-in link.
+            </p>
+          ) : (
+            <form onSubmit={handleMagicLink} className="space-y-4 w-full">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="w-full border-b border-muted bg-transparent text-near-black font-sans text-sm px-0 py-2 outline-none focus:border-terracotta transition-colors placeholder:text-muted/50"
+              />
+              <button
+                type="submit"
+                className="w-full bg-terracotta text-white font-sans text-sm font-medium py-3 hover:bg-terracotta/80 transition-colors cursor-pointer"
+              >
+                Send Link
+              </button>
+            </form>
+          )}
+
           {IS_DEV && (
             <button
               onClick={handleDevLogin}
-              className="px-8 py-3 border-2 border-dashed border-terracotta text-terracotta text-sm font-sans font-medium rounded-full hover:bg-terracotta hover:text-white transition-colors cursor-pointer"
+              className="mt-6 px-8 py-3 border-2 border-dashed border-terracotta text-terracotta text-sm font-sans font-medium rounded-full hover:bg-terracotta hover:text-white transition-colors cursor-pointer"
             >
               Dev Login
             </button>

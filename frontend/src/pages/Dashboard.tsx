@@ -19,13 +19,13 @@ export default function Dashboard() {
         setUser(me);
         setCollections(colls);
       })
-      .catch(() => setUser(null));
+      .catch(() => navigate("/"));
   }, []);
 
   if (!user) {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center">
-        <p className="text-muted text-sm font-sans">Loading...</p>
+        <p className="text-muted text-sm font-sans">Loading…</p>
       </div>
     );
   }
@@ -61,12 +61,20 @@ export default function Dashboard() {
                     <div className="text-muted text-xs font-sans mt-0.5">{c.description}</div>
                   )}
                 </div>
-                <button
-                  onClick={() => navigate(`/review/${c.id}`)}
-                  className="shrink-0 text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-4 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
-                >
-                  Review Items
-                </button>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => navigate(`/collection/${c.id}`)}
+                    className="text-xs font-sans uppercase tracking-[0.1em] border border-cobalt text-cobalt px-4 py-2 hover:bg-cobalt hover:text-white transition-colors cursor-pointer"
+                  >
+                    View Rankings
+                  </button>
+                  <button
+                    onClick={() => navigate(`/review/${c.id}`)}
+                    className="text-xs font-sans uppercase tracking-[0.1em] bg-terracotta text-white px-4 py-2 hover:bg-terracotta/80 transition-colors cursor-pointer"
+                  >
+                    Review Items
+                  </button>
+                </div>
               </div>
             ))}
           </div>

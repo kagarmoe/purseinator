@@ -5,12 +5,14 @@ import RankingSession from "./pages/RankingSession";
 import CollectionView from "./pages/CollectionView";
 import Dashboard from "./pages/Dashboard";
 import ItemReview from "./pages/ItemReview";
+import Verify from "./pages/Verify";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/verify" element={<Verify />} />
         <Route path="/session/:collectionId" element={<SessionPicker />} />
         <Route path="/rank/:collectionId" element={<RankingSession />} />
         <Route path="/collection/:collectionId" element={<CollectionView />} />
