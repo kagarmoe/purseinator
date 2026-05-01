@@ -234,29 +234,19 @@ async def test_multi_primary_color_with_secondary_colors_returns_422(auth_client
 
 
 @pytest.mark.asyncio
-async def test_secondary_colors_with_multi_primary_returns_422(auth_client, collection_id, item_id):
-    # Set primary to multi first (valid on its own)
-    await auth_client.patch(
+async def test_setting_secondary_after_primary_is_multi_returns_422(auth_client, collection_id, item_id):
+    # Set primary to multi (auto-clears secondary)
+    resp1 = await auth_client.patch(
         f"/collections/{collection_id}/items/{item_id}",
-        json={"primary_color": "multi"},
+        json={"primary_color": "multi", "secondary_colors": []},
     )
-    # Now try to add secondary colors in a separate request
-    resp = await auth_client.patch(
+    assert resp1.status_code == 200
+    # Now try to set secondary while primary is multi — must 422
+    resp2 = await auth_client.patch(
         f"/collections/{collection_id}/items/{item_id}",
         json={"secondary_colors": ["tan"]},
     )
-    # This request only sends secondary_colors — no primary_color in the body.
-    # The validator only fires on values in the current request body, so this
-    # passes (200). The mutual-exclusion rule is enforced when BOTH fields appear
-    # in the same request body.
-    assert resp.status_code == 200
-
-    # Now send both fields in one request — this must be rejected.
-    resp = await auth_client.patch(
-        f"/collections/{collection_id}/items/{item_id}",
-        json={"primary_color": "multi", "secondary_colors": ["tan"]},
-    )
-    assert resp.status_code == 422
+    assert resp2.status_code == 422
 
 
 @pytest.mark.asyncio

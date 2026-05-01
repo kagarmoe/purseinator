@@ -185,6 +185,16 @@ async def update_item(
     if update_data.get("primary_color") == "multi":
         update_data["secondary_colors"] = []
 
+    # Post-merge invariant check: primary_color="multi" + non-empty secondary_colors is invalid
+    # (Auto-clear above handles primary→multi direction; this catches secondary→non-empty when primary is already multi.)
+    effective_primary = update_data.get("primary_color", row.primary_color)
+    effective_secondary = update_data.get("secondary_colors", row.secondary_colors) or []
+    if effective_primary == "multi" and effective_secondary:
+        raise HTTPException(
+            status_code=422,
+            detail="primary_color='multi' is mutually exclusive with non-empty secondary_colors",
+        )
+
     for key, value in update_data.items():
         setattr(row, key, value)
 
