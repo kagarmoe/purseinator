@@ -1,12 +1,21 @@
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function apiFetch(path: string, options?: RequestInit) {
   const resp = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     ...options,
   });
   if (!resp.ok) {
-    throw new Error(`API error: ${resp.status}`);
+    throw new ApiError(resp.status, `API error: ${resp.status}`);
   }
   return resp.json();
 }
@@ -89,4 +98,90 @@ export async function updateItemBrand(
 
 export async function getItems(collectionId: number) {
   return apiFetch(`/collections/${collectionId}/items`);
+}
+
+export async function createCollection(data: { name: string; description?: string }) {
+  return apiFetch("/collections", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function patchItemMetadata(
+  collectionId: number,
+  itemId: number,
+  fields: Record<string, unknown>
+) {
+  return apiFetch(`/collections/${collectionId}/items/${itemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+}
+
+export async function addItemPhotos(
+  collectionId: number,
+  itemId: number,
+  files: File[]
+) {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("files", f));
+  return apiFetch(`/collections/${collectionId}/items/${itemId}/photos`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// Upload/staging types
+export type StagingPhoto = {
+  id: number;
+  thumbnail_url: string;
+  original_filename: string | null;
+  captured_at: string | null;
+};
+
+export type UploadResponse = {
+  succeeded: StagingPhoto[];
+  failed: { original_filename: string; reason: string }[];
+};
+
+export type StagingListResponse = {
+  photos: StagingPhoto[];
+  has_more: boolean;
+};
+
+export async function uploadPhotos(files: File[]): Promise<UploadResponse> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("files", f));
+  return apiFetch("/upload/photos", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function getStaging(params: {
+  limit?: number;
+  before?: number;
+}): Promise<StagingListResponse> {
+  const query = new URLSearchParams();
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.before !== undefined) query.set("before", String(params.before));
+  const qs = query.toString();
+  return apiFetch(`/upload/staging${qs ? `?${qs}` : ""}`);
+}
+
+export async function groupPhotos(body: {
+  collection_id: number;
+  photo_ids: number[];
+}): Promise<{ item_id: number }> {
+  return apiFetch("/upload/group", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function discardStaging(id: number): Promise<void> {
+  return apiFetch(`/upload/staging/${id}`, { method: "DELETE" });
 }
