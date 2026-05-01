@@ -9,6 +9,7 @@ import {
   createCollection,
   type StagingPhoto,
 } from '../api';
+import { humanizeUploadReason } from '../lib/upload';
 import { useToast } from '../components/ToastProvider';
 import { ThumbnailTile } from '../components/ThumbnailTile';
 import { SelectionActionBar } from '../components/SelectionActionBar';
@@ -149,6 +150,10 @@ export function UploadInbox() {
           `${result.succeeded.length} photo${result.succeeded.length !== 1 ? 's' : ''} uploaded · ${result.failed.length} skipped`,
           'info'
         );
+        // Log humanized reasons to console for debugging
+        result.failed.forEach((f) => {
+          console.info(`Skipped ${f.original_filename}: ${humanizeUploadReason(f.reason)}`);
+        });
       } else if (result.failed.length > 0 && result.succeeded.length === 0) {
         toast.error("None of those uploaded — see details");
       }
