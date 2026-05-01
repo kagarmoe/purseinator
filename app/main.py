@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -29,15 +32,30 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
     from app.config import get_settings
     from app.database import get_session_factory
+    from app.tasks.staging_cleanup import _cleanup_loop
 
     settings = get_settings()
-    app = FastAPI(title="Purseinator", version="0.1.0")
+    _session_factory = session_factory or get_session_factory()
+    _storage_root = photo_storage_root or str(settings.photo_storage_root)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Start background cleanup task
+        task = asyncio.create_task(_cleanup_loop(_session_factory, _storage_root))
+        yield
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    app = FastAPI(title="Purseinator", version="0.1.0", lifespan=lifespan)
 
     # 200 MB per-request cap (checked via Content-Length header)
     app.add_middleware(RequestSizeLimitMiddleware)
 
-    app.state.session_factory = session_factory or get_session_factory()
-    app.state.photo_storage_root = photo_storage_root or str(settings.photo_storage_root)
+    app.state.session_factory = _session_factory
+    app.state.photo_storage_root = _storage_root
 
     @app.get("/health")
     async def health():
