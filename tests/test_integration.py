@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import importlib.util
 import io
 
 import pytest
+
+numpy_available = importlib.util.find_spec("numpy") is not None
+skip_no_gpu = pytest.mark.skipif(
+    not numpy_available,
+    reason="requires gpu extras: pip install -e '.[gpu]'"
+)
 
 
 @pytest.mark.asyncio
@@ -112,6 +119,7 @@ async def test_auth_flow(db_client):
     assert resp.status_code == 401
 
 
+@skip_no_gpu
 @pytest.mark.asyncio
 async def test_ingest_and_push_workflow(auth_client, tmp_path, photo_storage_root):
     """Test CLI workflow: ingest photos -> push to server -> verify items exist."""
