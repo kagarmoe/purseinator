@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Cookie, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from purseinator.auth import create_magic_token, create_session_id, verify_magic_token
@@ -56,7 +57,11 @@ async def verify(token: str, db: AsyncSession = Depends(get_db)):
         expires_at=datetime.now(timezone.utc) + timedelta(days=settings.session_expiry_days),
     )
     db.add(session)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=401, detail="Token already used")
 
     return {"session_id": sid, "email": email}
 

@@ -82,3 +82,24 @@ async def test_verify_token_reuse_returns_401(db_client):
 async def test_magic_link_missing_email_returns_422(db_client):
     resp = await db_client.post("/auth/magic-link", json={})
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_verify_token_reuse_after_db_insert_returns_401(db_client, db_session_factory):
+    """Race-safety: even if SELECT race lets two requests through, IntegrityError on insert returns 401."""
+    from purseinator.models import UsedTokenTable
+    import jwt
+    from purseinator.config import get_settings
+
+    resp = await db_client.post("/auth/magic-link", json={"email": "race@example.com"})
+    token = resp.json()["token"]
+
+    # Pre-insert the jti as if another concurrent request already redeemed it
+    payload = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])
+    async with db_session_factory() as db:
+        db.add(UsedTokenTable(jti=payload["jti"]))
+        await db.commit()
+
+    # Verify should now return 401 (caught either by SELECT or by IntegrityError)
+    resp = await db_client.get(f"/auth/verify?token={token}")
+    assert resp.status_code == 401
