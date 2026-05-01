@@ -64,3 +64,16 @@ async def auth_client(db_engine, db_session_factory, photo_storage_root):
         session_id = resp.json()["session_id"]
         ac.cookies.set("session_id", session_id)
         yield ac
+
+
+@pytest.fixture
+async def other_auth_client(db_engine, db_session_factory, photo_storage_root):
+    """A test client authenticated as a different user (kimberly), for ownership checks."""
+    app = create_app(session_factory=db_session_factory, photo_storage_root=photo_storage_root)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/auth/magic-link", json={"email": "kimberly@example.com"})
+        token = resp.json()["token"]
+        resp = await ac.get(f"/auth/verify?token={token}")
+        ac.cookies.set("session_id", resp.json()["session_id"])
+        yield ac
