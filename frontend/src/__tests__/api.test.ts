@@ -8,12 +8,27 @@ beforeEach(() => {
   mockFetch.mockReset();
 });
 
+// Helper to create a mock response with headers
+function mockResponse(body: unknown, status = 200) {
+  return {
+    ok: true,
+    status,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    json: async () => body,
+  };
+}
+
+function mockErrorResponse(status: number) {
+  return {
+    ok: false,
+    status,
+    headers: new Headers(),
+  };
+}
+
 describe('uploadPhotos', () => {
   it('posts multipart with files[] field', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ succeeded: [], failed: [] }),
-    });
+    mockFetch.mockResolvedValueOnce(mockResponse({ succeeded: [], failed: [] }));
 
     const { uploadPhotos } = await import('../api');
     const file1 = new File(['data1'], 'photo1.jpg', { type: 'image/jpeg' });
@@ -33,10 +48,7 @@ describe('uploadPhotos', () => {
 
 describe('getStaging', () => {
   it('passes limit and before query params', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ photos: [], has_more: false }),
-    });
+    mockFetch.mockResolvedValueOnce(mockResponse({ photos: [], has_more: false }));
 
     const { getStaging } = await import('../api');
     await getStaging({ limit: 10, before: 5 });
@@ -48,10 +60,7 @@ describe('getStaging', () => {
   });
 
   it('works without optional params', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ photos: [], has_more: false }),
-    });
+    mockFetch.mockResolvedValueOnce(mockResponse({ photos: [], has_more: false }));
 
     const { getStaging } = await import('../api');
     await getStaging({});
@@ -64,10 +73,7 @@ describe('getStaging', () => {
 
 describe('groupPhotos', () => {
   it('posts json body {collection_id, photo_ids}', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ item_id: 1 }),
-    });
+    mockFetch.mockResolvedValueOnce(mockResponse({ item_id: 1 }));
 
     const { groupPhotos } = await import('../api');
     await groupPhotos({ collection_id: 42, photo_ids: [1, 2, 3] });
@@ -85,7 +91,8 @@ describe('discardStaging', () => {
   it('issues DELETE to /upload/staging/{id}', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({}),
+      status: 204,
+      headers: new Headers(),
     });
 
     const { discardStaging } = await import('../api');
@@ -99,10 +106,7 @@ describe('discardStaging', () => {
 
 describe('ApiError', () => {
   it('apiFetch surfaces 429 distinctly with .status === 429', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 429,
-    });
+    mockFetch.mockResolvedValueOnce(mockErrorResponse(429));
 
     const { getStaging } = await import('../api');
     try {
@@ -114,10 +118,7 @@ describe('ApiError', () => {
   });
 
   it('throws ApiError with correct status for 413', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 413,
-    });
+    mockFetch.mockResolvedValueOnce(mockErrorResponse(413));
 
     const { uploadPhotos } = await import('../api');
     try {

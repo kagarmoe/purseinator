@@ -17,6 +17,11 @@ async function apiFetch(path: string, options?: RequestInit) {
   if (!resp.ok) {
     throw new ApiError(resp.status, `API error: ${resp.status}`);
   }
+  // Handle empty responses (e.g., 204 No Content)
+  const contentType = resp.headers.get('content-type');
+  if (!contentType || resp.status === 204) {
+    return null;
+  }
   return resp.json();
 }
 

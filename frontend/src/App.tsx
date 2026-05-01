@@ -6,6 +6,7 @@ import CollectionView from "./pages/CollectionView";
 import Dashboard from "./pages/Dashboard";
 import ItemReview from "./pages/ItemReview";
 import Verify from "./pages/Verify";
+import UploadInbox from "./pages/UploadInbox";
 import { ToastProvider } from "./components/ToastProvider";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/collection/:collectionId" element={<CollectionView />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/review/:collectionId" element={<ItemReview />} />
+        <Route path="/upload" element={<UploadInbox />} />
       </Routes>
     </BrowserRouter>
     </ToastProvider>
