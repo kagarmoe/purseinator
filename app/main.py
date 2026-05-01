@@ -1,8 +1,29 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
-from app.routes import auth, collections, items, photos, ranking
+from app.routes import auth, collections, items, photos, ranking, upload
+
+_MAX_REQUEST_BODY_BYTES = 200 * 1024 * 1024  # 200 MB
+
+
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject requests with Content-Length > 200 MB before reading the body."""
+
+    async def dispatch(self, request: Request, call_next):
+        cl = request.headers.get("content-length")
+        if cl is not None:
+            try:
+                if int(cl) > _MAX_REQUEST_BODY_BYTES:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"detail": "Request body too large; maximum is 200 MB."},
+                    )
+            except ValueError:
+                pass
+        return await call_next(request)
 
 
 def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
@@ -11,6 +32,9 @@ def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
 
     settings = get_settings()
     app = FastAPI(title="Purseinator", version="0.1.0")
+
+    # 200 MB per-request cap (checked via Content-Length header)
+    app.add_middleware(RequestSizeLimitMiddleware)
 
     app.state.session_factory = session_factory or get_session_factory()
     app.state.photo_storage_root = photo_storage_root or str(settings.photo_storage_root)
@@ -24,5 +48,6 @@ def create_app(session_factory=None, photo_storage_root=None) -> FastAPI:
     app.include_router(items.router, prefix="/collections/{collection_id}/items")
     app.include_router(photos.router)
     app.include_router(ranking.router, prefix="/collections/{collection_id}/ranking")
+    app.include_router(upload.router, prefix="/upload")
 
     return app

@@ -15,6 +15,10 @@ async def get_db(request: Request):
         yield session
 
 
+async def get_photo_storage_root(request: Request) -> str:
+    return request.app.state.photo_storage_root
+
+
 async def get_current_user(
     session_id: str = Cookie(None),
     db: AsyncSession = Depends(get_db),
