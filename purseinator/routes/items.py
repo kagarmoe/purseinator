@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from purseinator.deps import get_current_user, get_db
-from purseinator.models import ItemRead, ItemTable, UserTable
+from purseinator.models import CollectionTable, ItemRead, ItemTable, UserTable
 
 router = APIRouter()
 
@@ -85,6 +85,13 @@ async def update_item(
     user: UserTable = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ItemRead:
+    coll_result = await db.execute(
+        select(CollectionTable).where(CollectionTable.id == collection_id)
+    )
+    coll = coll_result.scalar_one_or_none()
+    if coll is None or coll.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     result = await db.execute(
         select(ItemTable).where(
             ItemTable.id == item_id, ItemTable.collection_id == collection_id
